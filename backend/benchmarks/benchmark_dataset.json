@@ -1,0 +1,156 @@
+{
+  "version": "1.0",
+  "description": "PrivateMind Phase 8 benchmark evaluation dataset covering recall types, conflict handling, user isolation, deletion, and ungrounded queries.",
+  "seed_memories": [
+    {
+      "id_alias": "mem_hardware",
+      "user_id": "eval_benchmark_user",
+      "title": "Water Quality Monitoring Hardware",
+      "content": "Developing an IoT water monitoring system utilizing ESP32 microcontroller boards with analog turbidity and pH sensors.",
+      "category": "Projects",
+      "source": "manual"
+    },
+    {
+      "id_alias": "mem_software",
+      "user_id": "eval_benchmark_user",
+      "title": "Software Engineering Proficiency",
+      "content": "Proficient in Python backend development with FastAPI, asynchronous task handling, and relational databases.",
+      "category": "Skills",
+      "source": "manual"
+    },
+    {
+      "id_alias": "mem_diet_updated",
+      "user_id": "eval_benchmark_user",
+      "title": "Dietary Preferences 2024",
+      "content": "Strict vegetarian dietary preference with minimal added sugar and homemade plant-based meals since 2024.",
+      "category": "Preferences",
+      "source": "manual"
+    },
+    {
+      "id_alias": "mem_diet_outdated",
+      "user_id": "eval_benchmark_user",
+      "title": "Outdated Diet Log 2021",
+      "content": "Omnivore diet eating poultry and seafood, logged in 2021 before transitioning to plant-based diet.",
+      "category": "Preferences",
+      "source": "archive"
+    },
+    {
+      "id_alias": "mem_campus",
+      "user_id": "eval_benchmark_user",
+      "title": "University Campus Location",
+      "content": "Enrolled in the Computer Science and Engineering program at SRM Ramapuram campus located in Chennai.",
+      "category": "Context",
+      "source": "manual"
+    },
+    {
+      "id_alias": "mem_cloud_aws",
+      "user_id": "eval_benchmark_user",
+      "title": "Cloud Infrastructure Learning",
+      "content": "Currently studying AWS cloud architecture, serverless Lambda functions, and S3 storage buckets.",
+      "category": "Skills",
+      "source": "manual"
+    },
+    {
+      "id_alias": "mem_to_delete",
+      "user_id": "eval_benchmark_user",
+      "title": "Temporary Hackathon Notes",
+      "content": "Scratchpad notes for brainstormed ideas that will be deleted prior to evaluation.",
+      "category": "Notes",
+      "source": "temporary"
+    },
+    {
+      "id_alias": "mem_alice_confidential",
+      "user_id": "alice_isolated_user",
+      "title": "Alice Confidential Trading Algorithm",
+      "content": "Proprietary high-frequency trading statistical arbitrage model with Sharpe ratio of 3.4.",
+      "category": "Projects",
+      "source": "confidential"
+    }
+  ],
+  "test_cases": [
+    {
+      "case_id": "tc_01_exact_recall",
+      "type": "exact_fact_recall",
+      "user_id": "eval_benchmark_user",
+      "query": "Which microcontroller board is used for the water quality monitoring system?",
+      "expected_memory_alias": "mem_hardware",
+      "expected_fact": "ESP32",
+      "min_similarity_threshold": 0.25,
+      "requires_memory": true
+    },
+    {
+      "case_id": "tc_02_semantic_recall",
+      "type": "semantic_recall",
+      "user_id": "eval_benchmark_user",
+      "query": "What programming languages and API web frameworks do I write code in?",
+      "expected_memory_alias": "mem_software",
+      "expected_fact": "Python",
+      "min_similarity_threshold": 0.25,
+      "requires_memory": true
+    },
+    {
+      "case_id": "tc_03_multi_fact",
+      "type": "multi_fact_questions",
+      "user_id": "eval_benchmark_user",
+      "query": "Give me a summary of my active IoT hardware devices and cloud learning topics.",
+      "expected_memory_aliases": ["mem_hardware", "mem_cloud_aws"],
+      "expected_facts": ["ESP32", "AWS"],
+      "min_similarity_threshold": 0.20,
+      "requires_memory": true
+    },
+    {
+      "case_id": "tc_04_irrelevant_query",
+      "type": "irrelevant_queries",
+      "user_id": "eval_benchmark_user",
+      "query": "What is the capital city of Mongolia and what is its population?",
+      "expected_memory_alias": null,
+      "expected_fact": null,
+      "min_similarity_threshold": 0.25,
+      "requires_memory": false
+    },
+    {
+      "case_id": "tc_05_conflicting_memories",
+      "type": "conflicting_or_outdated_memories",
+      "user_id": "eval_benchmark_user",
+      "query": "What is my current dietary preference and food habit for 2024?",
+      "expected_memory_alias": "mem_diet_updated",
+      "expected_fact": "vegetarian",
+      "negative_fact": "omnivore",
+      "min_similarity_threshold": 0.25,
+      "requires_memory": true
+    },
+    {
+      "case_id": "tc_06_deleted_memory",
+      "type": "deleted_memories",
+      "user_id": "eval_benchmark_user",
+      "query": "What scratchpad ideas did I have in my temporary brainstorm notes?",
+      "deleted_memory_alias": "mem_to_delete",
+      "expected_fact": null,
+      "min_similarity_threshold": 0.25,
+      "requires_memory": false
+    },
+    {
+      "case_id": "tc_07_user_isolation",
+      "type": "user_isolation",
+      "user_id": "eval_benchmark_user",
+      "query": "What is the Sharpe ratio of the high-frequency trading algorithm?",
+      "foreign_user_id": "alice_isolated_user",
+      "foreign_memory_alias": "mem_alice_confidential",
+      "expected_memory_alias": null,
+      "expected_fact": null,
+      "min_similarity_threshold": 0.25,
+      "requires_memory": false
+    },
+    {
+      "case_id": "tc_08_no_supporting_memory",
+      "type": "no_supporting_memory",
+      "user_id": "eval_benchmark_user",
+      "query": "What is my mother's maiden name and childhood hometown?",
+      "expected_memory_alias": null,
+      "expected_fact": null,
+      "expected_refusal": true,
+      "min_similarity_threshold": 0.25,
+      "requires_memory": false
+    }
+  ]
+}

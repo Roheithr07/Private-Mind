@@ -1,0 +1,926 @@
+{
+  "timestamp": "2026-10-12T17:25:20Z",
+  "environment": {
+    "platform": "Windows-10-10.0.26300-SP0",
+    "processor": "AMD64 Family 23 Model 160 Stepping 0, AuthenticAMD",
+    "cpu_count": 8,
+    "python_version": "3.11.9",
+    "gpu_available": false,
+    "gpu_hardware": "None (CPU Execution)",
+    "inference_tier": "Local CPU Simulation",
+    "llm_provider": "mock",
+    "llm_model": "mock-privatemind-v1",
+    "is_mock_llm": true,
+    "embedding_provider": "local_semantic_v1",
+    "embedding_dimension": 128,
+    "vector_backend": "FAISS-CPU (IndexIDMap2 wrapping IndexFlatIP)"
+  },
+  "cache_optimization": {
+    "cached_entries": 8,
+    "max_cache_size": 2048,
+    "cache_hits": 32,
+    "cache_misses": 8,
+    "hit_ratio": 0.8
+  },
+  "comparisons": {
+    "retrieval_semantic_baseline_k5": {
+      "search_mode": "semantic",
+      "limit": 5,
+      "threshold": 0.25,
+      "mean_precision": 0.8125,
+      "mean_recall": 0.875,
+      "mean_mrr": 0.875,
+      "latency_median_ms": 4.73,
+      "latency_p95_ms": 6.37,
+      "total_cases": 8,
+      "case_results": [
+        {
+          "case_id": "tc_01_exact_recall",
+          "type": "exact_fact_recall",
+          "query": "Which microcontroller board is used for the water quality monitoring system?",
+          "retrieved_count": 1,
+          "expected_ids": [
+            9
+          ],
+          "retrieved_ids": [
+            9
+          ],
+          "latency_ms": 6.15,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_02_semantic_recall",
+          "type": "semantic_recall",
+          "query": "What programming languages and API web frameworks do I write code in?",
+          "retrieved_count": 1,
+          "expected_ids": [
+            10
+          ],
+          "retrieved_ids": [
+            10
+          ],
+          "latency_ms": 4.93,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_03_multi_fact",
+          "type": "multi_fact_questions",
+          "query": "Give me a summary of my active IoT hardware devices and cloud learning topics.",
+          "retrieved_count": 2,
+          "expected_ids": [
+            9,
+            14
+          ],
+          "retrieved_ids": [
+            14,
+            9
+          ],
+          "latency_ms": 5.9,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_04_irrelevant_query",
+          "type": "irrelevant_queries",
+          "query": "What is the capital city of Mongolia and what is its population?",
+          "retrieved_count": 0,
+          "expected_ids": [],
+          "retrieved_ids": [],
+          "latency_ms": 2.78,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_05_conflicting_memories",
+          "type": "conflicting_or_outdated_memories",
+          "query": "What is my current dietary preference and food habit for 2024?",
+          "retrieved_count": 2,
+          "expected_ids": [
+            11
+          ],
+          "retrieved_ids": [
+            11,
+            12
+          ],
+          "latency_ms": 4.54,
+          "recall": 1.0,
+          "precision": 0.5,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_06_deleted_memory",
+          "type": "deleted_memories",
+          "query": "What scratchpad ideas did I have in my temporary brainstorm notes?",
+          "retrieved_count": 2,
+          "expected_ids": [],
+          "retrieved_ids": [
+            14,
+            13
+          ],
+          "latency_ms": 6.37,
+          "recall": 0.0,
+          "precision": 0.0,
+          "reciprocal_rank": 0.0
+        },
+        {
+          "case_id": "tc_07_user_isolation",
+          "type": "user_isolation",
+          "query": "What is the Sharpe ratio of the high-frequency trading algorithm?",
+          "retrieved_count": 0,
+          "expected_ids": [],
+          "retrieved_ids": [],
+          "latency_ms": 3.34,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_08_no_supporting_memory",
+          "type": "no_supporting_memory",
+          "query": "What is my mother's maiden name and childhood hometown?",
+          "retrieved_count": 0,
+          "expected_ids": [],
+          "retrieved_ids": [],
+          "latency_ms": 1.77,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        }
+      ]
+    },
+    "retrieval_semantic_warm_cache_k5": {
+      "search_mode": "semantic",
+      "limit": 5,
+      "threshold": 0.25,
+      "mean_precision": 0.8125,
+      "mean_recall": 0.875,
+      "mean_mrr": 0.875,
+      "latency_median_ms": 2.63,
+      "latency_p95_ms": 5.13,
+      "total_cases": 8,
+      "case_results": [
+        {
+          "case_id": "tc_01_exact_recall",
+          "type": "exact_fact_recall",
+          "query": "Which microcontroller board is used for the water quality monitoring system?",
+          "retrieved_count": 1,
+          "expected_ids": [
+            9
+          ],
+          "retrieved_ids": [
+            9
+          ],
+          "latency_ms": 2.38,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_02_semantic_recall",
+          "type": "semantic_recall",
+          "query": "What programming languages and API web frameworks do I write code in?",
+          "retrieved_count": 1,
+          "expected_ids": [
+            10
+          ],
+          "retrieved_ids": [
+            10
+          ],
+          "latency_ms": 2.61,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_03_multi_fact",
+          "type": "multi_fact_questions",
+          "query": "Give me a summary of my active IoT hardware devices and cloud learning topics.",
+          "retrieved_count": 2,
+          "expected_ids": [
+            9,
+            14
+          ],
+          "retrieved_ids": [
+            14,
+            9
+          ],
+          "latency_ms": 3.81,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_04_irrelevant_query",
+          "type": "irrelevant_queries",
+          "query": "What is the capital city of Mongolia and what is its population?",
+          "retrieved_count": 0,
+          "expected_ids": [],
+          "retrieved_ids": [],
+          "latency_ms": 2.52,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_05_conflicting_memories",
+          "type": "conflicting_or_outdated_memories",
+          "query": "What is my current dietary preference and food habit for 2024?",
+          "retrieved_count": 2,
+          "expected_ids": [
+            11
+          ],
+          "retrieved_ids": [
+            11,
+            12
+          ],
+          "latency_ms": 4.31,
+          "recall": 1.0,
+          "precision": 0.5,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_06_deleted_memory",
+          "type": "deleted_memories",
+          "query": "What scratchpad ideas did I have in my temporary brainstorm notes?",
+          "retrieved_count": 2,
+          "expected_ids": [],
+          "retrieved_ids": [
+            14,
+            13
+          ],
+          "latency_ms": 5.13,
+          "recall": 0.0,
+          "precision": 0.0,
+          "reciprocal_rank": 0.0
+        },
+        {
+          "case_id": "tc_07_user_isolation",
+          "type": "user_isolation",
+          "query": "What is the Sharpe ratio of the high-frequency trading algorithm?",
+          "retrieved_count": 0,
+          "expected_ids": [],
+          "retrieved_ids": [],
+          "latency_ms": 2.65,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_08_no_supporting_memory",
+          "type": "no_supporting_memory",
+          "query": "What is my mother's maiden name and childhood hometown?",
+          "retrieved_count": 0,
+          "expected_ids": [],
+          "retrieved_ids": [],
+          "latency_ms": 1.23,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        }
+      ]
+    },
+    "retrieval_keyword_baseline_k5": {
+      "search_mode": "keyword",
+      "limit": 5,
+      "threshold": 0.25,
+      "mean_precision": 0.2667,
+      "mean_recall": 0.625,
+      "mean_mrr": 0.625,
+      "latency_median_ms": 1.32,
+      "latency_p95_ms": 4.22,
+      "total_cases": 8,
+      "case_results": [
+        {
+          "case_id": "tc_01_exact_recall",
+          "type": "exact_fact_recall",
+          "query": "Which microcontroller board is used for the water quality monitoring system?",
+          "retrieved_count": 3,
+          "expected_ids": [
+            9
+          ],
+          "retrieved_ids": [
+            9,
+            12,
+            13
+          ],
+          "latency_ms": 4.22,
+          "recall": 1.0,
+          "precision": 0.333,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_02_semantic_recall",
+          "type": "semantic_recall",
+          "query": "What programming languages and API web frameworks do I write code in?",
+          "retrieved_count": 5,
+          "expected_ids": [
+            10
+          ],
+          "retrieved_ids": [
+            10,
+            9,
+            11,
+            12,
+            13
+          ],
+          "latency_ms": 1.48,
+          "recall": 1.0,
+          "precision": 0.2,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_03_multi_fact",
+          "type": "multi_fact_questions",
+          "query": "Give me a summary of my active IoT hardware devices and cloud learning topics.",
+          "retrieved_count": 5,
+          "expected_ids": [
+            9,
+            14
+          ],
+          "retrieved_ids": [
+            9,
+            10,
+            14,
+            11,
+            12
+          ],
+          "latency_ms": 1.21,
+          "recall": 1.0,
+          "precision": 0.4,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_04_irrelevant_query",
+          "type": "irrelevant_queries",
+          "query": "What is the capital city of Mongolia and what is its population?",
+          "retrieved_count": 5,
+          "expected_ids": [],
+          "retrieved_ids": [
+            10,
+            13,
+            9,
+            11,
+            12
+          ],
+          "latency_ms": 1.27,
+          "recall": 0.0,
+          "precision": 0.0,
+          "reciprocal_rank": 0.0
+        },
+        {
+          "case_id": "tc_05_conflicting_memories",
+          "type": "conflicting_or_outdated_memories",
+          "query": "What is my current dietary preference and food habit for 2024?",
+          "retrieved_count": 5,
+          "expected_ids": [
+            11
+          ],
+          "retrieved_ids": [
+            11,
+            12,
+            14,
+            9,
+            10
+          ],
+          "latency_ms": 1.26,
+          "recall": 1.0,
+          "precision": 0.2,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_06_deleted_memory",
+          "type": "deleted_memories",
+          "query": "What scratchpad ideas did I have in my temporary brainstorm notes?",
+          "retrieved_count": 5,
+          "expected_ids": [],
+          "retrieved_ids": [
+            9,
+            10,
+            11,
+            12,
+            13
+          ],
+          "latency_ms": 1.4,
+          "recall": 0.0,
+          "precision": 0.0,
+          "reciprocal_rank": 0.0
+        },
+        {
+          "case_id": "tc_07_user_isolation",
+          "type": "user_isolation",
+          "query": "What is the Sharpe ratio of the high-frequency trading algorithm?",
+          "retrieved_count": 2,
+          "expected_ids": [],
+          "retrieved_ids": [
+            13,
+            10
+          ],
+          "latency_ms": 1.37,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_08_no_supporting_memory",
+          "type": "no_supporting_memory",
+          "query": "What is my mother's maiden name and childhood hometown?",
+          "retrieved_count": 5,
+          "expected_ids": [],
+          "retrieved_ids": [
+            9,
+            10,
+            11,
+            12,
+            13
+          ],
+          "latency_ms": 1.21,
+          "recall": 0.0,
+          "precision": 0.0,
+          "reciprocal_rank": 0.0
+        }
+      ]
+    },
+    "retrieval_limit_k1": {
+      "search_mode": "semantic",
+      "limit": 1,
+      "threshold": 0.25,
+      "mean_precision": 0.875,
+      "mean_recall": 0.8125,
+      "mean_mrr": 0.875,
+      "latency_median_ms": 3.29,
+      "latency_p95_ms": 6.13,
+      "total_cases": 8,
+      "case_results": [
+        {
+          "case_id": "tc_01_exact_recall",
+          "type": "exact_fact_recall",
+          "query": "Which microcontroller board is used for the water quality monitoring system?",
+          "retrieved_count": 1,
+          "expected_ids": [
+            9
+          ],
+          "retrieved_ids": [
+            9
+          ],
+          "latency_ms": 2.91,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_02_semantic_recall",
+          "type": "semantic_recall",
+          "query": "What programming languages and API web frameworks do I write code in?",
+          "retrieved_count": 1,
+          "expected_ids": [
+            10
+          ],
+          "retrieved_ids": [
+            10
+          ],
+          "latency_ms": 3.66,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_03_multi_fact",
+          "type": "multi_fact_questions",
+          "query": "Give me a summary of my active IoT hardware devices and cloud learning topics.",
+          "retrieved_count": 1,
+          "expected_ids": [
+            9,
+            14
+          ],
+          "retrieved_ids": [
+            14
+          ],
+          "latency_ms": 3.9,
+          "recall": 0.5,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_04_irrelevant_query",
+          "type": "irrelevant_queries",
+          "query": "What is the capital city of Mongolia and what is its population?",
+          "retrieved_count": 0,
+          "expected_ids": [],
+          "retrieved_ids": [],
+          "latency_ms": 1.43,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_05_conflicting_memories",
+          "type": "conflicting_or_outdated_memories",
+          "query": "What is my current dietary preference and food habit for 2024?",
+          "retrieved_count": 1,
+          "expected_ids": [
+            11
+          ],
+          "retrieved_ids": [
+            11
+          ],
+          "latency_ms": 4.02,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_06_deleted_memory",
+          "type": "deleted_memories",
+          "query": "What scratchpad ideas did I have in my temporary brainstorm notes?",
+          "retrieved_count": 1,
+          "expected_ids": [],
+          "retrieved_ids": [
+            14
+          ],
+          "latency_ms": 6.13,
+          "recall": 0.0,
+          "precision": 0.0,
+          "reciprocal_rank": 0.0
+        },
+        {
+          "case_id": "tc_07_user_isolation",
+          "type": "user_isolation",
+          "query": "What is the Sharpe ratio of the high-frequency trading algorithm?",
+          "retrieved_count": 0,
+          "expected_ids": [],
+          "retrieved_ids": [],
+          "latency_ms": 2.81,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_08_no_supporting_memory",
+          "type": "no_supporting_memory",
+          "query": "What is my mother's maiden name and childhood hometown?",
+          "retrieved_count": 0,
+          "expected_ids": [],
+          "retrieved_ids": [],
+          "latency_ms": 1.42,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        }
+      ]
+    },
+    "retrieval_limit_k3": {
+      "search_mode": "semantic",
+      "limit": 3,
+      "threshold": 0.25,
+      "mean_precision": 0.8125,
+      "mean_recall": 0.875,
+      "mean_mrr": 0.875,
+      "latency_median_ms": 3.1,
+      "latency_p95_ms": 5.34,
+      "total_cases": 8,
+      "case_results": [
+        {
+          "case_id": "tc_01_exact_recall",
+          "type": "exact_fact_recall",
+          "query": "Which microcontroller board is used for the water quality monitoring system?",
+          "retrieved_count": 1,
+          "expected_ids": [
+            9
+          ],
+          "retrieved_ids": [
+            9
+          ],
+          "latency_ms": 2.93,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_02_semantic_recall",
+          "type": "semantic_recall",
+          "query": "What programming languages and API web frameworks do I write code in?",
+          "retrieved_count": 1,
+          "expected_ids": [
+            10
+          ],
+          "retrieved_ids": [
+            10
+          ],
+          "latency_ms": 2.62,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_03_multi_fact",
+          "type": "multi_fact_questions",
+          "query": "Give me a summary of my active IoT hardware devices and cloud learning topics.",
+          "retrieved_count": 2,
+          "expected_ids": [
+            9,
+            14
+          ],
+          "retrieved_ids": [
+            14,
+            9
+          ],
+          "latency_ms": 3.62,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_04_irrelevant_query",
+          "type": "irrelevant_queries",
+          "query": "What is the capital city of Mongolia and what is its population?",
+          "retrieved_count": 0,
+          "expected_ids": [],
+          "retrieved_ids": [],
+          "latency_ms": 3.28,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_05_conflicting_memories",
+          "type": "conflicting_or_outdated_memories",
+          "query": "What is my current dietary preference and food habit for 2024?",
+          "retrieved_count": 2,
+          "expected_ids": [
+            11
+          ],
+          "retrieved_ids": [
+            11,
+            12
+          ],
+          "latency_ms": 3.96,
+          "recall": 1.0,
+          "precision": 0.5,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_06_deleted_memory",
+          "type": "deleted_memories",
+          "query": "What scratchpad ideas did I have in my temporary brainstorm notes?",
+          "retrieved_count": 2,
+          "expected_ids": [],
+          "retrieved_ids": [
+            14,
+            13
+          ],
+          "latency_ms": 5.34,
+          "recall": 0.0,
+          "precision": 0.0,
+          "reciprocal_rank": 0.0
+        },
+        {
+          "case_id": "tc_07_user_isolation",
+          "type": "user_isolation",
+          "query": "What is the Sharpe ratio of the high-frequency trading algorithm?",
+          "retrieved_count": 0,
+          "expected_ids": [],
+          "retrieved_ids": [],
+          "latency_ms": 2.59,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "case_id": "tc_08_no_supporting_memory",
+          "type": "no_supporting_memory",
+          "query": "What is my mother's maiden name and childhood hometown?",
+          "retrieved_count": 0,
+          "expected_ids": [],
+          "retrieved_ids": [],
+          "latency_ms": 1.28,
+          "recall": 1.0,
+          "precision": 1.0,
+          "reciprocal_rank": 1.0
+        }
+      ]
+    },
+    "chat_memory_enabled": {
+      "memory_enabled": true,
+      "retrieval_limit": 5,
+      "grounded_accuracy": 75.0,
+      "total_test_cases": 8,
+      "latency_median_ms": 0.06,
+      "latency_p95_ms": 0.61,
+      "total_prompt_tokens": 1200,
+      "total_completion_tokens": 320,
+      "total_tokens": 1520,
+      "estimated_cost_usd": 0.0,
+      "chat_results": [
+        {
+          "case_id": "tc_01_exact_recall",
+          "type": "exact_fact_recall",
+          "query": "Which microcontroller board is used for the water quality monitoring system?",
+          "response": "Based on your approved memories (Memory #9): Developing an IoT water monitoring system utilizing ESP32 microcontroller boards with analog turbidity and pH sensors. (from 'Water Quality Monitoring Hardware', category: Projects)",
+          "is_correct": true,
+          "memories_used": [
+            9
+          ],
+          "latency_ms": 0.61,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_02_semantic_recall",
+          "type": "semantic_recall",
+          "query": "What programming languages and API web frameworks do I write code in?",
+          "response": "Based on your approved memories (Memory #10): Proficient in Python backend development with FastAPI, asynchronous task handling, and relational databases. (from 'Software Engineering Proficiency', category: Skills)",
+          "is_correct": true,
+          "memories_used": [
+            10
+          ],
+          "latency_ms": 0.05,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_03_multi_fact",
+          "type": "multi_fact_questions",
+          "query": "Give me a summary of my active IoT hardware devices and cloud learning topics.",
+          "response": "Based on your stored context (Memory #14, Memory #9), you are utilizing ESP32 sensors for your water quality monitoring project.",
+          "is_correct": false,
+          "memories_used": [
+            14,
+            9
+          ],
+          "latency_ms": 0.06,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_04_irrelevant_query",
+          "type": "irrelevant_queries",
+          "query": "What is the capital city of Mongolia and what is its population?",
+          "response": "I do not have any saved memory regarding this subject in your context vault. I'm ready to help you answer or record new details.",
+          "is_correct": true,
+          "memories_used": [],
+          "latency_ms": 0.06,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_05_conflicting_memories",
+          "type": "conflicting_or_outdated_memories",
+          "query": "What is my current dietary preference and food habit for 2024?",
+          "response": "Your context indicates (Memory #11, Memory #12) that you follow a vegetarian dietary preference with reduced sugar.",
+          "is_correct": true,
+          "memories_used": [
+            11,
+            12
+          ],
+          "latency_ms": 0.05,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_06_deleted_memory",
+          "type": "deleted_memories",
+          "query": "What scratchpad ideas did I have in my temporary brainstorm notes?",
+          "response": "Based on your approved memories (Memory #14, Memory #13): Currently studying AWS cloud architecture, serverless Lambda functions, and S3 storage buckets. (from 'Cloud Infrastructure Learning', category: Skills) Enrolled in the Computer Science and Engineering program at SRM Ramapuram campus located in Chennai. (from 'University Campus Location', category: Context)",
+          "is_correct": false,
+          "memories_used": [
+            14,
+            13
+          ],
+          "latency_ms": 0.05,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_07_user_isolation",
+          "type": "user_isolation",
+          "query": "What is the Sharpe ratio of the high-frequency trading algorithm?",
+          "response": "I do not have any saved memory regarding this subject in your context vault. I'm ready to help you answer or record new details.",
+          "is_correct": true,
+          "memories_used": [],
+          "latency_ms": 0.04,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_08_no_supporting_memory",
+          "type": "no_supporting_memory",
+          "query": "What is my mother's maiden name and childhood hometown?",
+          "response": "I do not have any saved memory regarding this subject in your context vault. I'm ready to help you answer or record new details.",
+          "is_correct": true,
+          "memories_used": [],
+          "latency_ms": 0.06,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        }
+      ]
+    },
+    "chat_memory_disabled": {
+      "memory_enabled": false,
+      "retrieval_limit": 0,
+      "grounded_accuracy": 100.0,
+      "total_test_cases": 8,
+      "latency_median_ms": 0.01,
+      "latency_p95_ms": 0.03,
+      "total_prompt_tokens": 1200,
+      "total_completion_tokens": 320,
+      "total_tokens": 1520,
+      "estimated_cost_usd": 0.0,
+      "chat_results": [
+        {
+          "case_id": "tc_01_exact_recall",
+          "type": "exact_fact_recall",
+          "query": "Which microcontroller board is used for the water quality monitoring system?",
+          "response": "I do not have any saved memory regarding this subject in your context vault. I'm ready to help you answer or record new details.",
+          "is_correct": true,
+          "memories_used": [],
+          "latency_ms": 0.03,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_02_semantic_recall",
+          "type": "semantic_recall",
+          "query": "What programming languages and API web frameworks do I write code in?",
+          "response": "I do not have any saved memory regarding this subject in your context vault. I'm ready to help you answer or record new details.",
+          "is_correct": true,
+          "memories_used": [],
+          "latency_ms": 0.01,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_03_multi_fact",
+          "type": "multi_fact_questions",
+          "query": "Give me a summary of my active IoT hardware devices and cloud learning topics.",
+          "response": "I do not have any saved memory regarding this subject in your context vault. I'm ready to help you answer or record new details.",
+          "is_correct": true,
+          "memories_used": [],
+          "latency_ms": 0.01,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_04_irrelevant_query",
+          "type": "irrelevant_queries",
+          "query": "What is the capital city of Mongolia and what is its population?",
+          "response": "I do not have any saved memory regarding this subject in your context vault. I'm ready to help you answer or record new details.",
+          "is_correct": true,
+          "memories_used": [],
+          "latency_ms": 0.01,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_05_conflicting_memories",
+          "type": "conflicting_or_outdated_memories",
+          "query": "What is my current dietary preference and food habit for 2024?",
+          "response": "I do not have any saved memory regarding this subject in your context vault. I'm ready to help you answer or record new details.",
+          "is_correct": true,
+          "memories_used": [],
+          "latency_ms": 0.01,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_06_deleted_memory",
+          "type": "deleted_memories",
+          "query": "What scratchpad ideas did I have in my temporary brainstorm notes?",
+          "response": "I do not have any saved memory regarding this subject in your context vault. I'm ready to help you answer or record new details.",
+          "is_correct": true,
+          "memories_used": [],
+          "latency_ms": 0.01,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_07_user_isolation",
+          "type": "user_isolation",
+          "query": "What is the Sharpe ratio of the high-frequency trading algorithm?",
+          "response": "I do not have any saved memory regarding this subject in your context vault. I'm ready to help you answer or record new details.",
+          "is_correct": true,
+          "memories_used": [],
+          "latency_ms": 0.01,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        },
+        {
+          "case_id": "tc_08_no_supporting_memory",
+          "type": "no_supporting_memory",
+          "query": "What is my mother's maiden name and childhood hometown?",
+          "response": "I do not have any saved memory regarding this subject in your context vault. I'm ready to help you answer or record new details.",
+          "is_correct": true,
+          "memories_used": [],
+          "latency_ms": 0.01,
+          "prompt_tokens": 150,
+          "completion_tokens": 40
+        }
+      ]
+    }
+  }
+}
