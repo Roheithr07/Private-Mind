@@ -1,0 +1,3989 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PrivateMind — Your second brain</title>
+<style>
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --bg: #f4f8fd;
+  --navy: #0b1f33;
+  --muted: #475569;
+  --muted-light: #64748b;
+  --line: #dce7f3;
+  --blue: #2563eb;
+  --blue-hover: #1d4ed8;
+  --blue-light: #e8f2ff;
+  --surface: rgba(255, 255, 255, 0.85);
+  --surface-solid: #ffffff;
+  --shadow: 0 16px 45px rgba(39, 86, 132, 0.08);
+  --shadow-sm: 0 4px 16px rgba(39, 86, 132, 0.05);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at 90% 0%, rgba(56, 189, 248, 0.12), transparent 30%), var(--bg);
+  color: var(--navy);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+button, input, textarea, select {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  position: relative;
+}
+
+/* --- Sidebar --- */
+.sidebar {
+  width: 250px;
+  flex: 0 0 250px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  background: rgba(255, 255, 255, 0.75);
+  border-right: 1px solid rgba(197, 216, 235, 0.75);
+  backdrop-filter: blur(18px);
+  z-index: 30;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 31, 51, 0.35);
+  backdrop-filter: blur(4px);
+  z-index: 40;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.sidebar-overlay.open {
+  display: block;
+  opacity: 1;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px 26px;
+}
+
+.logo {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--blue);
+  background: #e7f1ff;
+  flex-shrink: 0;
+}
+
+.brand b {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.brand small, .profile small {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.nav {
+  display: grid;
+  gap: 6px;
+}
+
+.nav button {
+  border: 0;
+  background: transparent;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  min-height: 44px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav button:hover, .nav button.active {
+  background: #dceaff;
+  color: var(--blue);
+}
+
+.nav button.active {
+  box-shadow: inset 3px 0 var(--blue);
+}
+
+.profile-wrap {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border: 1px solid #e1ebf5;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.profile div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile b {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.note {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 10px 8px 0;
+  font-weight: 500;
+}
+
+/* --- Header / Top Bar --- */
+.main {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.top {
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 32px;
+  border-bottom: 1px solid rgba(207, 224, 241, 0.75);
+  background: rgba(244, 248, 253, 0.7);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.mobile-menu-btn {
+  display: none;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dce7f3;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+  color: #334155;
+  cursor: pointer;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.mobile-menu-btn:hover {
+  background: #e6f0ff;
+  color: var(--blue);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.heading-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--blue);
+  background: #deebff;
+  flex-shrink: 0;
+}
+
+.heading h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.heading p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 2px 0 0;
+  font-weight: 400;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 240px;
+  height: 40px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #dfeaf5;
+  border-radius: 10px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 10px;
+  color: #64748b;
+  font-size: 16px;
+  transition: all 0.15s;
+}
+
+.icon:hover {
+  background: #e5effb;
+  color: var(--blue);
+  border-color: #dce7f3;
+}
+
+/* --- Content & Layout Container --- */
+.content {
+  padding: 28px 32px 48px;
+  max-width: 1680px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.page-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  color: var(--blue);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.page-row h2, .section h2 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  margin: 4px 0 0;
+}
+
+.section h2 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* --- Buttons --- */
+.primary, .secondary, .danger {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 0 18px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.primary {
+  background: var(--blue);
+  color: white;
+  border: 0;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
+}
+
+.primary:hover {
+  background: var(--blue-hover);
+  transform: translateY(-1px);
+}
+
+.secondary {
+  color: #334155;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #cbd5e1;
+}
+
+.secondary:hover {
+  background: #ffffff;
+  border-color: #94a3b8;
+}
+
+.danger {
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.danger:hover {
+  background: #fee2e2;
+}
+
+/* --- Stats Grid --- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #e0ebf5;
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.blue { color: #2563eb; background: #e6f0ff; }
+.teal { color: #0d9488; background: #e0f6f0; }
+.rose { color: #e11d48; background: #ffe4e6; }
+.violet { color: #7c3aed; background: #ede9fe; }
+.amber { color: #d97706; background: #fef3c7; }
+
+.stat span, .stat b { display: block; }
+.stat span { color: var(--muted); font-size: 13px; font-weight: 500; }
+.stat b { font-size: 22px; font-weight: 700; margin-top: 2px; }
+
+.section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.section .link {
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 10px;
+}
+
+.section .link:hover {
+  text-decoration: underline;
+}
+
+/* --- AI Workspace Layout --- */
+.workspace {
+  height: calc(100vh - 76px);
+  min-height: 600px;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  padding: 16px 32px 20px;
+  max-width: 1680px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.history {
+  padding: 16px 14px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid #dfeaf5;
+  border-radius: 16px 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.new {
+  width: 100%;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--blue);
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 22px;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.2);
+  transition: background 0.15s;
+}
+
+.new:hover {
+  background: var(--blue-hover);
+}
+
+.history label {
+  display: block;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 8px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.history section {
+  margin-bottom: 20px;
+}
+
+.history button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 10px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.history button:hover, .history button.active {
+  color: var(--blue);
+  background: #e5f0ff;
+  font-weight: 600;
+}
+
+.history small {
+  margin-left: auto;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.chat {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid #dfeaf5;
+  border-left: 0;
+  border-radius: 0 16px 16px 0;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.chat-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px clamp(24px, 5vw, 64px) 14px;
+}
+
+.intro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 10px 0 24px;
+}
+
+.orb {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--blue);
+  background: #e5f0ff;
+  box-shadow: 0 0 0 8px rgba(229, 240, 255, 0.5);
+  flex-shrink: 0;
+}
+
+.intro h2 {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 3px 0;
+}
+
+.intro p:last-child {
+  color: var(--muted);
+  font-size: 15px;
+  margin: 0;
+}
+
+.retrieved {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  margin: 0 auto 24px;
+  color: #1e3a5f;
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 30px;
+  background: #e3f8f1;
+  border: 1px solid #bcead8;
+  font-weight: 500;
+}
+
+.retrieved strong {
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+.thread {
+  display: grid;
+  gap: 20px;
+}
+
+.empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: #64748b;
+}
+
+.empty .orb {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 14px;
+}
+
+.empty b {
+  display: block;
+  font-size: 17px;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.empty span {
+  display: block;
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.message {
+  display: flex;
+  gap: 14px;
+  max-width: 84%;
+}
+
+.message.me {
+  margin-left: auto;
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--blue);
+  background: #dfedff;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.me .message-avatar {
+  color: white;
+  background: var(--blue);
+  border-radius: 50%;
+}
+
+.bubble {
+  padding: 14px 18px;
+  border: 1px solid #e0eaf4;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 6px 16px 16px 16px;
+  box-shadow: 0 4px 16px rgba(50, 91, 130, 0.05);
+}
+
+.me .bubble {
+  color: white;
+  background: var(--blue);
+  border-color: var(--blue);
+  border-radius: 16px 6px 16px 16px;
+}
+
+.bubble small {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.me .bubble small {
+  color: #dbeafe;
+}
+
+.bubble p {
+  line-height: 1.55;
+  margin: 6px 0 0;
+  font-size: 15px;
+}
+
+.citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #edf2f7;
+}
+
+.citations span {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.chat-footer {
+  padding: 12px clamp(24px, 5vw, 64px) 18px;
+  background: rgba(255, 255, 255, 0.5);
+  border-top: 1px solid #e2e8f0;
+}
+
+.suggestions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.suggestions button {
+  color: #1d4ed8;
+  background: #eef5ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.suggestions button:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+}
+
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 16px;
+  height: 54px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(51, 92, 132, 0.08);
+  transition: border-color 0.15s;
+}
+
+.composer:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.15);
+}
+
+.composer input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  font-size: 15px;
+  color: var(--navy);
+  height: 100%;
+}
+
+.send {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--blue);
+  color: white;
+  font-size: 18px;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.send:hover {
+  background: var(--blue-hover);
+}
+
+.disclaimer {
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+/* --- Search & Filters --- */
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(340px, 100%);
+  height: 42px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+}
+
+.search-field input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 15px;
+  color: var(--navy);
+}
+
+.page-row .search-field {
+  margin-right: auto;
+}
+
+.filters {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid #e0eaf3;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.filters button {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  padding: 10px 14px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.filters button:hover {
+  color: var(--blue);
+}
+
+.filters button.active {
+  color: var(--blue);
+  border-bottom: 2px solid var(--blue);
+}
+
+.filters i {
+  margin-left: 6px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: #edf3f9;
+  font-size: 11px;
+  font-style: normal;
+}
+
+/* --- Memory Vault Grid & Detail --- */
+.vault {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+}
+
+.memory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.memory {
+  min-height: 180px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #dce8f3;
+  border-radius: 14px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.memory:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.memory-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.memory h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 14px 0 8px;
+}
+
+.memory p {
+  color: #475569;
+  line-height: 1.55;
+  font-size: 14px;
+  margin: 0;
+}
+
+.meta {
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 14px;
+}
+
+.detail {
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #dbe7f2;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  align-self: start;
+}
+
+.detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.detail h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 12px 0 6px;
+}
+
+.detail-copy {
+  color: #334155;
+  line-height: 1.6;
+  font-size: 15px;
+  margin: 16px 0 24px;
+}
+
+.detail-block {
+  padding: 14px 0;
+  border-top: 1px solid #e8eff5;
+}
+
+.detail-block label {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.source {
+  padding-top: 10px;
+  color: #334155;
+  font-size: 14px;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.detail-actions button {
+  flex: 1;
+}
+
+/* --- Projects & Workspaces --- */
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 18px;
+}
+
+.project {
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #dce8f3;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+
+.project:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+}
+
+.cover {
+  height: 110px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: white;
+}
+
+.cover span {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cover.blue { background: linear-gradient(135deg, #1656ad, #3b82f6); }
+.cover.teal { background: linear-gradient(135deg, #0f766e, #14b8a6); }
+.cover.sand { background: linear-gradient(135deg, #9a3412, #f97316); }
+
+.project-body {
+  padding: 18px;
+}
+
+.project h3 {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.project p {
+  color: #475569;
+  line-height: 1.55;
+  font-size: 14px;
+  min-height: 42px;
+  margin: 6px 0 12px;
+}
+
+.tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tags span {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 5px;
+}
+
+.progress {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  margin: 14px 0 10px;
+  overflow: hidden;
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  background: var(--blue);
+  border-radius: 4px;
+}
+
+.project-foot {
+  display: flex;
+  justify-content: space-between;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* --- Status & Priority Badges --- */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-active { background: #e0f6f0; color: #0d9488; border: 1px solid #b7ecde; }
+.status-planning { background: #e6f0ff; color: #2563eb; border: 1px solid #c7ddff; }
+.status-completed { background: #f0edff; color: #7c3aed; border: 1px solid #dcd4ff; }
+.status-on_hold { background: #fff4db; color: #d97706; border: 1px solid #ffe1a6; }
+
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.priority-urgent { background: #ffe4e6; color: #e11d48; border: 1px solid #fecdd3; }
+.priority-high { background: #fff4db; color: #d97706; border: 1px solid #fed7aa; }
+.priority-medium { background: #e6f0ff; color: #2563eb; border: 1px solid #c7ddff; }
+.priority-low { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+.project-top-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.project-stats-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0 8px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.project-stats-row span {
+  background: #f1f6fc;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2ecf7;
+}
+
+/* --- Project Workspace Detailed View --- */
+.workspace-header {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid #dce8f3;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 22px;
+  box-shadow: var(--shadow-sm);
+}
+
+.workspace-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.workspace-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.workspace-title-wrap h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.workspace-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.workspace-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid #dce7f3;
+  margin-bottom: 22px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.workspace-tabs button {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  padding: 11px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px 10px 0 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.workspace-tabs button:hover {
+  background: #e8f1fc;
+  color: var(--blue);
+}
+
+.workspace-tabs button.active {
+  color: var(--blue);
+  border-bottom: 2px solid var(--blue);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.workspace-tabs button i {
+  font-style: normal;
+  font-size: 11px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: #e8f0f9;
+}
+
+.workspace-tabs button.active i {
+  background: #dceaff;
+  color: var(--blue);
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.item-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #dce8f3;
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.item-head h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.item-body {
+  color: #334155;
+  font-size: 15px;
+  line-height: 1.6;
+  flex: 1;
+  margin: 0 0 14px;
+  white-space: pre-wrap;
+}
+
+.item-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid #edf3f9;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #dce8f3;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  transition: background 0.15s;
+}
+
+.task-row:hover {
+  background: #ffffff;
+}
+
+.task-row.task-done {
+  opacity: 0.65;
+  background: #f8fafc;
+}
+
+.task-row.task-done .task-title {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.task-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  accent-color: var(--blue);
+  flex-shrink: 0;
+}
+
+.task-title {
+  font-weight: 600;
+  font-size: 15px;
+  flex: 1;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.chat-project-box {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #dce8f3;
+  border-radius: 14px;
+  padding: 22px;
+  min-height: 440px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-project-thread {
+  flex: 1;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 8px;
+  margin-bottom: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+/* --- Activity & Privacy --- */
+.activity {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.card {
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #dce8f3;
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.card h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.card-desc {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 4px 0 16px;
+}
+
+.activity-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid #edf2f6;
+  font-size: 14px;
+}
+
+.activity-row span:nth-child(2) {
+  flex: 1;
+}
+
+.activity-row small {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.privacy-intro {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 26px;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  background: linear-gradient(115deg, #e7f1ff, rgba(255, 255, 255, 0.85));
+  border: 1px solid #d3e4f7;
+}
+
+.privacy-intro h2 {
+  max-width: 500px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 4px 0 8px;
+}
+
+.privacy-intro p:last-child {
+  max-width: 680px;
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.privacy-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 20px;
+}
+
+.privacy-main {
+  display: grid;
+  gap: 18px;
+}
+
+.setting {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 0;
+  border-top: 1px solid #edf2f6;
+}
+
+.setting div:nth-child(2) {
+  flex: 1;
+}
+
+.setting b, .setting span {
+  display: block;
+}
+
+.setting b {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.setting span {
+  color: #64748b;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.switch {
+  width: 40px;
+  height: 24px;
+  padding: 3px;
+  border: 0;
+  border-radius: 16px;
+  background: #cbd5e1;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.switch span {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.switch.on {
+  background: var(--blue);
+}
+
+.switch.on span {
+  transform: translateX(16px);
+}
+
+.stored-row {
+  display: flex;
+  gap: 12px;
+  padding: 13px 0;
+  border-top: 1px solid #edf2f6;
+}
+
+.stored-row div { flex: 1; }
+.stored-row b { font-size: 14px; font-weight: 600; }
+.stored-row span { color: #64748b; font-size: 13px; line-height: 1.5; margin-top: 2px; }
+
+.prototype {
+  padding: 14px;
+  margin-top: 16px;
+  color: #1e40af;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* --- Settings --- */
+.settings-hero {
+  padding: 26px;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  border: 1px solid #d3e4f7;
+  background: linear-gradient(120deg, #e9f3ff, rgba(255, 255, 255, 0.85));
+}
+
+.settings-hero h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 6px 0;
+}
+
+.settings-hero p:last-child {
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.profile-edit {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 16px;
+  border-top: 1px solid #edf2f6;
+}
+
+.profile-edit div:nth-child(2) { flex: 1; }
+
+/* --- Modals --- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(12, 31, 51, 0.35);
+  backdrop-filter: blur(6px);
+}
+
+.modal form {
+  width: min(100%, 500px);
+  padding: 28px;
+  background: #fff;
+  border: 1px solid #dce8f3;
+  border-radius: 16px;
+  box-shadow: 0 20px 70px rgba(12, 37, 65, 0.22);
+}
+
+.modal h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 20px;
+}
+
+.modal label {
+  display: block;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 16px;
+}
+
+.modal input, .modal textarea, .modal select {
+  width: 100%;
+  display: block;
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  outline: 0;
+  border-radius: 10px;
+  background: #fbfdff;
+  font-size: 15px;
+  color: var(--navy);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+/* --- Badges & Indicators --- */
+.badge-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 6px;
+  text-transform: uppercase;
+}
+
+.badge-mock { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+.badge-real { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.badge-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+.candidate-box {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: #f0f7ff;
+  border: 1px dashed #93c5fd;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.candidate-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 0;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-approve { background: var(--blue); color: #fff; }
+.btn-approve:hover { background: var(--blue-hover); }
+.btn-reject { background: #e2e8f0; color: #334155; }
+.btn-reject:hover { background: #cbd5e1; }
+
+.loading-dots {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.loading-dots span {
+  width: 6px;
+  height: 6px;
+  background: var(--blue);
+  border-radius: 50%;
+  animation: pulse 0.8s infinite alternate;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.3; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1.2); }
+}
+
+.state-banner {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.state-banner.warn { background: #fff8e6; border: 1px solid #fde4a6; color: #8f6507; }
+.state-banner.err { background: #fff2f2; border: 1px solid #ffd1d1; color: #b32626; }
+
+/* --- Responsive Media Queries --- */
+@media (max-width: 1200px) {
+  .top, .content, .workspace {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .vault, .privacy-layout {
+    grid-template-columns: 1fr;
+  }
+  .detail {
+    position: static;
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    z-index: 50;
+    inset: 0 auto 0 0;
+    width: 270px;
+    transform: translateX(-105%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 20px 0 50px rgba(13, 39, 68, 0.2);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .mobile-menu-btn {
+    display: flex;
+  }
+  .workspace {
+    height: auto;
+    min-height: calc(100vh - 76px);
+    grid-template-columns: 1fr;
+    padding: 14px 16px 24px;
+    gap: 12px;
+  }
+  .history {
+    border-radius: 14px 14px 0 0;
+    border-right: 1px solid #dfeaf5;
+    max-height: 240px;
+  }
+  .chat {
+    border-left: 1px solid #dfeaf5;
+    border-radius: 0 0 14px 14px;
+    min-height: 540px;
+  }
+  .activity {
+    grid-template-columns: 1fr;
+  }
+  .privacy-intro {
+    flex-direction: column;
+  }
+  .page-row {
+    flex-wrap: wrap;
+  }
+  .page-row .search-field {
+    order: 2;
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .top {
+    height: 70px;
+    padding: 10px 16px;
+  }
+  .heading h1 {
+    font-size: 22px;
+  }
+  .heading p {
+    display: none;
+  }
+  .tools .search, .tools .icon {
+    display: none;
+  }
+  .content {
+    padding: 16px 14px 36px;
+  }
+  .stats {
+    grid-template-columns: 1fr;
+  }
+  .memory-grid, .project-grid {
+    grid-template-columns: 1fr;
+  }
+  .message {
+    max-width: 94%;
+  }
+  .composer {
+    height: 48px;
+    padding: 4px 6px 4px 12px;
+  }
+  .send {
+    width: 36px;
+    height: 36px;
+  }
+  .chat-scroll {
+    padding: 20px 14px 10px;
+  }
+  .chat-footer {
+    padding: 10px 14px 14px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="app"><div class="sidebar-overlay" id="sidebarOverlay"></div><aside class="sidebar" id="sidebar"><div class="brand"><div class="logo"><svg width="22" height="22"><use href="#brain"/></svg></div><div><b>PrivateMind</b><small>Your AI, your memory.</small></div></div><nav class="nav"><button data-page="workspace" class="active">⌂ <span>AI Workspace</span></button><button data-page="memories">▣ <span>Memory Vault</span></button><button data-page="projects">□ <span>Projects &amp; Context</span></button><button data-page="privacy">♢ <span>Privacy Center</span></button><button data-page="settings">⚙ <span>Settings</span></button></nav><div class="profile-wrap"><div class="profile"><div class="avatar">R</div><div><b>Roeith R</b><small>Student · CSE</small></div><button class="icon">⚙</button></div><p class="note" id="backendStatus">● Connecting to API...</p></div></aside><div class="main"><header class="top"><button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation">☰</button><div class="heading"><div class="heading-icon"><svg width="18" height="18"><use href="#sparkle"/></svg></div><div><h1 id="title">AI Workspace</h1><p id="subtitle">An AI that remembers what matters.</p></div></div><div class="tools"><div class="search">⌕ <span>Search conversations...</span></div><button class="icon">♧</button><button class="icon">?</button></div></header><div id="view"></div></div></div><svg style="display:none"><symbol id="brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4.5A3 3 0 0 0 4 7a3 3 0 0 0 .3 5.8A3.1 3.1 0 0 0 6 18.7a3 3 0 0 0 5-2.2V5.8a3 3 0 0 0-2-1.3ZM15 4.5A3 3 0 0 1 20 7a3 3 0 0 1-.3 5.8 3.1 3.1 0 0 1-1.7 5.9 3 3 0 0 1-5-2.2V5.8a3 3 0 0 1 2-1.3Z"/><path d="M6.5 8.5h2M15.5 8.5h2M6.5 14h2M15.5 14h2M12 6v12"/></symbol><symbol id="sparkle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3ZM19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></symbol></svg>
+<div id="modalContainer"></div>
+<script src="api.js"></script>
+<script>
+// --- State & Variables ---
+let memories = [];
+let page = 'workspace', filter = 'All', selected = null;
+let searchQuery = '';
+let isLoadingMemories = false;
+let memoriesError = null;
+let isBackendOnline = false;
+let currentConversationId = 'conv_' + Date.now();
+let chatMessages = [];
+let isSendingChat = false;
+let relevantSourcesCount = 0;
+let projectsData = null;
+let isLoadingProjects = false;
+let projectSearchQuery = '';
+let projectStatusFilter = 'All';
+let activeProjectId = null;
+let activeProjectDetail = null;
+let isLoadingProjectDetail = false;
+let projectWorkspaceTab = 'overview';
+let projectAiChatMessages = [];
+let isSendingProjectAiChat = false;
+let recentGlobalActivities = [];
+let privacySettings = {
+  enableMemory: true,
+  autoCreation: true,
+  reviewBeforeSaving: true
+};
+
+const meta = {
+  workspace: ['AI Workspace', 'An AI that remembers what matters.'],
+  memories: ['Memory Vault', 'Everything worth remembering.'],
+  projects: ['Projects & Context', 'Track your projects and related memories.'],
+  privacy: ['Privacy Center', 'Your data, your control.'],
+  settings: ['Settings', 'Personalize your PrivateMind experience.']
+};
+
+function formatDate(isoStr) {
+  if (!isoStr) return 'Recently';
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return 'Recently';
+    return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+  } catch (e) {
+    return 'Recently';
+  }
+}
+
+function mapMemory(m) {
+  return {
+    id: m.id,
+    title: m.title,
+    text: m.content,
+    content: m.content,
+    category: m.category || 'General',
+    source: m.source || 'manual',
+    date: formatDate(m.updated_at || m.created_at),
+    user_id: m.user_id,
+    created_at: m.created_at,
+    updated_at: m.updated_at
+  };
+}
+
+function categoryClass(cat) {
+  const c = (cat || '').toLowerCase();
+  if (c.includes('proj')) return 'blue';
+  if (c.includes('pref')) return 'rose';
+  if (c.includes('skill')) return 'violet';
+  if (c.includes('import')) return 'amber';
+  return 'teal';
+}
+
+function closeMobileDrawer() {
+  const sb = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (sb) sb.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
+}
+
+function toggleMobileDrawer() {
+  const sb = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (sb && overlay) {
+    const isOpen = sb.classList.toggle('open');
+    overlay.classList.toggle('open', isOpen);
+  }
+}
+
+function setPage(next) {
+  page = next;
+  closeMobileDrawer();
+  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+  document.getElementById('title').textContent = meta[page][0];
+  document.getElementById('subtitle').textContent = meta[page][1];
+  if (page === 'memories' && memories.length === 0 && !isLoadingMemories) {
+    loadMemories();
+  } else if (page === 'projects' && !projectsData && !isLoadingProjects) {
+    loadProjects();
+  }
+  render();
+}
+
+async function checkBackendHealth() {
+  const statusEl = document.getElementById('backendStatus');
+  try {
+    const res = await api.checkHealth();
+    if (res.online) {
+      isBackendOnline = true;
+      if (statusEl) statusEl.innerHTML = '● Backend Connected (127.0.0.1:8000)';
+    } else {
+      isBackendOnline = false;
+      if (statusEl) statusEl.innerHTML = '○ Backend Offline (Check 8000)';
+    }
+  } catch (err) {
+    isBackendOnline = false;
+    if (statusEl) statusEl.innerHTML = '○ Backend Offline (Check 8000)';
+  }
+}
+
+const initialSeed = [
+  { title: 'NVIDIA Hackathon', content: 'Building PrivateMind, a privacy-first AI assistant with persistent memory for the NVIDIA × Nebius Global AI Hackathon.', category: 'Projects', source: 'manual' },
+  { title: 'Diet Preference', content: 'Vegetarian, prefers reduced sugar and simple home-cooked meals.', category: 'Preferences', source: 'manual' },
+  { title: 'Tech Stack', content: 'Comfortable with C++, Python, React.js, Next.js, MySQL and AWS basics.', category: 'Skills', source: 'manual' },
+  { title: 'IoT Water Quality Monitor', content: 'ESP32 project using turbidity, temperature and dissolved oxygen sensors.', category: 'Projects', source: 'manual' },
+  { title: 'Target Weight', content: 'Current: 66 kg. Target: 64 kg. Prefers sustainable habits over aggressive goals.', category: 'Important', source: 'manual' },
+  { title: 'Location', content: 'Studying at SRM Ramapuram, based in Chennai.', category: 'Personal', source: 'manual' },
+  { title: 'Furniture E-commerce', content: 'Modern website concept for a furniture shop with a light UI and QASP.', category: 'Projects', source: 'manual' },
+  { title: 'Learning style', content: 'Prefers examples first, then concise explanations and practical next steps.', category: 'Preferences', source: 'manual' }
+];
+
+async function seedInitialMemories() {
+  isLoadingMemories = true;
+  render();
+  try {
+    for (const item of initialSeed) {
+      await api.createMemory(item);
+    }
+    sessionStorage.setItem('privatemind_seeded', 'true');
+    await loadMemories();
+  } catch (err) {
+    alert('Error seeding memories: ' + err.message);
+  } finally {
+    isLoadingMemories = false;
+    render();
+  }
+}
+
+async function loadMemories() {
+  isLoadingMemories = true;
+  memoriesError = null;
+  render();
+
+  try {
+    const data = await api.getMemories({
+      search: searchQuery.trim() || null,
+      category: filter === 'All' ? null : filter
+    });
+    memories = data.map(mapMemory);
+
+    // If SQLite is completely empty on fresh install, seed initial context once
+    if (memories.length === 0 && filter === 'All' && !searchQuery.trim() && !sessionStorage.getItem('privatemind_seeded')) {
+      sessionStorage.setItem('privatemind_seeded', 'true');
+      for (const item of initialSeed) {
+        await api.createMemory(item);
+      }
+      const fresh = await api.getMemories({});
+      memories = fresh.map(mapMemory);
+    }
+  } catch (err) {
+    memoriesError = err.message || 'Failed to load memories from backend API.';
+  } finally {
+    isLoadingMemories = false;
+    render();
+  }
+}
+
+async function loadProjects() {
+  isLoadingProjects = true;
+  render();
+  try {
+    projectsData = await api.getProjects({
+      search: projectSearchQuery,
+      status: projectStatusFilter
+    });
+    try {
+      recentGlobalActivities = await api.getRecentActivities({ limit: 6 });
+    } catch (e) {
+      recentGlobalActivities = [];
+    }
+  } catch (err) {
+    projectsData = {
+      projects: [],
+      total_projects: 0,
+      total_notes: 0,
+      related_memories_count: memories.length,
+      active_tasks_count: 0,
+      connected: false,
+      error: err.message
+    };
+  } finally {
+    isLoadingProjects = false;
+    render();
+  }
+}
+
+async function openProjectWorkspace(projectId) {
+  activeProjectId = parseInt(projectId, 10);
+  isLoadingProjectDetail = true;
+  projectWorkspaceTab = 'overview';
+  projectAiChatMessages = [];
+  render();
+  try {
+    activeProjectDetail = await api.getProjectDetail(activeProjectId);
+  } catch (err) {
+    alert('Failed to open project workspace: ' + err.message);
+    activeProjectId = null;
+    activeProjectDetail = null;
+  } finally {
+    isLoadingProjectDetail = false;
+    render();
+  }
+}
+
+async function reloadActiveProject() {
+  if (!activeProjectId) return;
+  try {
+    activeProjectDetail = await api.getProjectDetail(activeProjectId);
+    render();
+  } catch (err) {
+    console.error('Failed to reload project:', err);
+  }
+}
+
+function closeProjectWorkspace() {
+  activeProjectId = null;
+  activeProjectDetail = null;
+  loadProjects();
+}
+
+
+// --- Views ---
+function workspace() {
+  const sourcesText = relevantSourcesCount > 0 ? `${relevantSourcesCount} sources` : 'Ready';
+  return `<div class="workspace">
+    <aside class="history">
+      <button class="new" id="newChatBtn">＋ New conversation</button>
+      <section>
+        <label>Active Session</label>
+        <button class="active">◌ ${currentConversationId.replace('conv_', 'Session ')}<small>Active</small></button>
+      </section>
+      <section>
+        <label>Saved Topics</label>
+        ${['NVIDIA Hackathon Ideas', 'Diet and Workout Plan', 'Cloud Computing Topics'].map((x, i) => `<button data-topic="${x}">◌ ${x}<small>${i === 0 ? '15m' : '1h'}</small></button>`).join('')}
+      </section>
+      <section>
+        <label>Context Topics</label>
+        ${['IoT Project Discussion', 'Internship Preparation', 'Next.js Deployment'].map(x => `<button data-topic="${x}">◌ ${x}</button>`).join('')}
+      </section>
+    </aside>
+    <section class="chat">
+      <div class="chat-scroll" id="chatScroll">
+        <div class="intro">
+          <div class="orb"><svg width="26" height="26"><use href="#brain"/></svg></div>
+          <div>
+            <p class="eyebrow">Good morning, Roeith</p>
+            <h2>Your second brain.</h2>
+            <p>An AI that remembers what matters.</p>
+          </div>
+        </div>
+        <div class="retrieved" id="retrievedPill">
+          <i class="dot"></i> Relevant memories retrieved <strong id="retrievedSourcesCount">${sourcesText}</strong> ›
+        </div>
+        <div class="thread" id="thread">
+          ${chatMessages.length === 0 ? `
+            <div class="empty" id="empty">
+              <div class="orb"><svg width="20" height="20"><use href="#sparkle"/></svg></div>
+              <b>Start a conversation with your context in mind.</b>
+              <span>Try a prompt below or ask anything. Your approved memories will appear alongside answers.</span>
+            </div>
+          ` : renderThreadMessages()}
+        </div>
+      </div>
+      <div class="chat-footer">
+        <div class="suggestions">
+          <button data-prompt="What do you remember about my projects?">What do you remember about my projects?</button>
+          <button data-prompt="Help me plan my next project">Help me plan my next project</button>
+          <button data-prompt="Summarize my skills">Summarize my skills</button>
+        </div>
+        <form class="composer" id="chatForm">
+          <input id="chatInput" placeholder="Ask anything. Your context matters..." autocomplete="off">
+          <button class="send" id="sendBtn" type="submit">↑</button>
+        </form>
+        <p class="disclaimer">✦ Responses use semantic memory retrieval from SQLite. Configured provider: Nebius / NVIDIA / Local.</p>
+      </div>
+    </section>
+  </div>`;
+}
+
+function renderThreadMessages() {
+  return chatMessages.map((msg, index) => {
+    if (msg.role === 'me') {
+      return `<div class="message me">
+        <div class="message-avatar">R</div>
+        <div class="bubble">
+          <small>You</small>
+          <p>${escapeHtml(msg.text)}</p>
+        </div>
+      </div>`;
+    }
+
+    let badge = '';
+    if (msg.isError) {
+      badge = `<span class="badge-tag badge-error">API Error</span>`;
+    } else if (msg.isMock) {
+      badge = `<span class="badge-tag badge-mock">Mock Provider (No API key)</span>`;
+    } else if (msg.provider) {
+      badge = `<span class="badge-tag badge-real">${escapeHtml(msg.provider)} · ${escapeHtml(msg.model || 'live')}</span>`;
+    }
+
+    let citationsHtml = '';
+    if (msg.citations && msg.citations.length > 0) {
+      citationsHtml = `<div class="citations">${msg.citations.map(c => `<span>▣ ${escapeHtml(c.title || 'Memory')}</span>`).join('')}</div>`;
+    }
+
+    let candidatesHtml = '';
+    if (msg.candidates && msg.candidates.length > 0) {
+      candidatesHtml = msg.candidates.map(cand => `
+        <div class="candidate-box" id="cand_${cand.candidate_id}">
+          <b>💡 Candidate fact extracted:</b> ${escapeHtml(cand.title)} — <em>"${escapeHtml(cand.content)}"</em> (${escapeHtml(cand.category || 'General')})
+          <div class="candidate-actions">
+            <button class="btn-sm btn-approve" data-approve="${cand.candidate_id}" data-msg-idx="${index}">Approve &amp; Save</button>
+            <button class="btn-sm btn-reject" data-reject="${cand.candidate_id}" data-msg-idx="${index}">Reject</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    return `<div class="message">
+      <div class="message-avatar"><svg width="16" height="16"><use href="#brain"/></svg></div>
+      <div class="bubble">
+        <small>PrivateMind ${badge}</small>
+        ${msg.loading ? `<p class="loading-dots">Thinking<span></span><span></span><span></span></p>` : `<p>${escapeHtml(msg.text)}</p>`}
+        ${citationsHtml}
+        ${candidatesHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function send(text) {
+  if (!text || !text.trim() || isSendingChat) return;
+  const trimmed = text.trim();
+  isSendingChat = true;
+
+  // Add user message
+  chatMessages.push({ role: 'me', text: trimmed });
+
+  // Add assistant loading state
+  const loadingIndex = chatMessages.push({
+    role: 'assistant',
+    text: '',
+    loading: true
+  }) - 1;
+
+  renderChatThread();
+
+  try {
+    const res = await api.sendChat({
+      message: trimmed,
+      conversationId: currentConversationId,
+      retrievalThreshold: 0.25,
+      maxMemories: privacySettings.enableMemory ? 5 : 0
+    });
+
+    relevantSourcesCount = (res.memories_retrieved || []).length;
+    chatMessages[loadingIndex] = {
+      role: 'assistant',
+      text: res.response,
+      provider: res.provider,
+      model: res.model,
+      isMock: res.is_mock,
+      citations: res.memories_retrieved || [],
+      candidates: privacySettings.autoCreation ? (res.extracted_candidates || []) : [],
+      loading: false
+    };
+  } catch (err) {
+    chatMessages[loadingIndex] = {
+      role: 'assistant',
+      text: `Unable to complete chat request: ${err.message}. Backend running at http://127.0.0.1:8000?`,
+      isError: true,
+      loading: false
+    };
+  } finally {
+    isSendingChat = false;
+    renderChatThread();
+  }
+}
+
+function renderChatThread() {
+  const thread = document.getElementById('thread');
+  const countEl = document.getElementById('retrievedSourcesCount');
+  if (countEl) countEl.textContent = relevantSourcesCount > 0 ? `${relevantSourcesCount} sources` : 'Ready';
+  if (thread) {
+    thread.innerHTML = chatMessages.length === 0 ? `
+      <div class="empty" id="empty">
+        <div class="orb"><svg width="20" height="20"><use href="#sparkle"/></svg></div>
+        <b>Start a conversation with your context in mind.</b>
+        <span>Try a prompt below or ask anything. Your approved memories will appear alongside answers.</span>
+      </div>
+    ` : renderThreadMessages();
+    bindChatEvents();
+    const scrollEl = document.getElementById('chatScroll');
+    if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
+  }
+}
+
+function memoriesView() {
+  const visible = memories.filter(m => (filter === 'All' || m.category.toLowerCase() === filter.toLowerCase()));
+
+  const totalCount = memories.length;
+  const projCount = memories.filter(m => m.category.toLowerCase().includes('proj')).length;
+  const prefCount = memories.filter(m => m.category.toLowerCase().includes('pref')).length;
+  const skillCount = memories.filter(m => m.category.toLowerCase().includes('skill')).length;
+  const impCount = memories.filter(m => m.category.toLowerCase().includes('import')).length;
+
+  return `<div class="content">
+    ${memoriesError ? `<div class="state-banner err"><span>⚠️ ${escapeHtml(memoriesError)}</span><button class="btn-sm btn-approve" id="retryMemories">Retry</button></div>` : ''}
+    <div class="page-row">
+      <div class="search-field">⌕ <input id="memorySearch" placeholder="Search memories in SQLite..." value="${escapeHtml(searchQuery)}"></div>
+      <button class="secondary" id="refreshMemoriesBtn">↻ Refresh</button>
+      <button class="primary" id="addMemory">＋ Add memory</button>
+    </div>
+    <div class="stats">
+      ${[
+        ['▣', 'Total memories', totalCount, 'blue'],
+        ['□', 'Projects', projCount, 'teal'],
+        ['♥', 'Preferences', prefCount, 'rose'],
+        ['✦', 'Skills', skillCount, 'violet'],
+        ['★', 'Important', impCount, 'amber']
+      ].map(s => `<div class="stat"><div class="stat-icon ${s[3]}">${s[0]}</div><div><span>${s[1]}</span><b>${s[2]}</b></div></div>`).join('')}
+    </div>
+    <div class="section">
+      <div>
+        <p class="eyebrow">Your context library</p>
+        <h2>Recent memories</h2>
+      </div>
+      <button class="link" id="viewAll">View all →</button>
+    </div>
+    <div class="vault">
+      <div>
+        <div class="filters">
+          ${['All', 'Projects', 'Preferences', 'Skills', 'Personal', 'Important'].map(c => `
+            <button class="${filter.toLowerCase() === c.toLowerCase() ? 'active' : ''}" data-filter="${c}">
+              ${c}<i>${c === 'All' ? totalCount : memories.filter(m => m.category.toLowerCase().includes(c.toLowerCase())).length}</i>
+            </button>
+          `).join('')}
+        </div>
+        ${isLoadingMemories ? `
+          <div class="empty"><div class="loading-dots">Loading persistent memories<span></span><span></span><span></span></div></div>
+        ` : visible.length === 0 ? `
+          <div class="empty">
+            <div class="orb"><svg width="20" height="20"><use href="#brain"/></svg></div>
+            <b>No memories found in SQLite database.</b>
+            <span>Click "＋ Add memory" to create your first persistent memory or load starter context below.</span>
+            <div style="margin-top:12px">
+              <button class="btn-sm btn-approve" id="seedDemoMemoriesBtn">＋ Load Starter Context</button>
+            </div>
+          </div>
+        ` : `
+          <div class="memory-grid">
+            ${visible.map(m => `
+              <article class="memory" data-memory="${m.id}">
+                <div class="memory-top">
+                  <span class="pill ${categoryClass(m.category)}">${escapeHtml(m.category)}</span>
+                  <button class="icon delete" data-delete="${m.id}" title="Delete memory">•••</button>
+                </div>
+                <h3>${escapeHtml(m.title)}</h3>
+                <p>${escapeHtml(m.text)}</p>
+                <div class="meta">◷ ${m.date}</div>
+              </article>
+            `).join('')}
+          </div>
+        `}
+      </div>
+      ${selected ? detail(selected) : ''}
+    </div>
+  </div>`;
+}
+
+function detail(m) {
+  return `<aside class="detail">
+    <div class="detail-head">
+      <div>
+        <span class="pill ${categoryClass(m.category)}">${escapeHtml(m.category)}</span>
+        <h2>${escapeHtml(m.title)}</h2>
+      </div>
+      <button class="icon" id="closeDetail">×</button>
+    </div>
+    <p class="detail-copy">${escapeHtml(m.text)}</p>
+    <div class="detail-block">
+      <label>Source</label>
+      <div class="source">▣ ${escapeHtml(m.source || 'Manual entry')}<br><small>Persistent SQLite memory (ID: ${m.id})</small></div>
+    </div>
+    <div class="detail-block">
+      <label>Last updated</label>
+      <p class="source">◷ ${m.date}</p>
+    </div>
+    <div class="detail-actions">
+      <button class="secondary" id="detailEdit">✎ Edit</button>
+      <button class="danger" id="detailDelete">⌫ Delete</button>
+    </div>
+    <p class="disclaimer">Stored permanently in SQLite database.</p>
+  </aside>`;
+}
+
+function projects() {
+  if (activeProjectId) {
+    if (isLoadingProjectDetail) {
+      return `<div class="content">
+        <div class="empty"><div class="loading-dots">Loading project workspace<span></span><span></span><span></span></div></div>
+      </div>`;
+    }
+    if (!activeProjectDetail || !activeProjectDetail.project) {
+      return `<div class="content">
+        <div class="page-row">
+          <button class="secondary" id="backToProjectsBtn">← Back to all projects</button>
+        </div>
+        <div class="empty">
+          <b>Project not found.</b>
+          <span>This project may have been deleted or is unavailable.</span>
+        </div>
+      </div>`;
+    }
+    return projectWorkspaceView(activeProjectDetail);
+  }
+  return projectsListView();
+}
+
+function projectsListView() {
+  const pList = (projectsData && projectsData.projects) || [];
+  const totalNotes = (projectsData && projectsData.total_notes) || 0;
+  const relMemories = (projectsData && projectsData.related_memories_count) || 0;
+  const activeTasks = (projectsData && projectsData.active_tasks_count) || 0;
+
+  return `<div class="content">
+    <div class="page-row">
+      <div>
+        <p class="eyebrow">Organize your context</p>
+        <h2>Projects that move you forward.</h2>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="search-field" style="width:260px">⌕ <input id="projectSearchInput" placeholder="Search projects or tags..." value="${escapeHtml(projectSearchQuery)}"></div>
+        <button class="primary" id="newProjectBtn">＋ New project</button>
+      </div>
+    </div>
+    <div class="filters" id="projectFilterBar">
+      ${['All', 'Active', 'Planning', 'Completed', 'On_Hold'].map(st => {
+        const isActive = (projectStatusFilter || 'All').toLowerCase() === st.toLowerCase();
+        const cnt = st === 'All' ? pList.length : pList.filter(p => (p.status || '').toLowerCase() === st.toLowerCase()).length;
+        const label = st === 'On_Hold' ? 'On Hold' : st;
+        return `<button class="${isActive ? 'active' : ''}" data-pfilter="${st}">${label}<i>${cnt}</i></button>`;
+      }).join('')}
+    </div>
+    ${isLoadingProjects ? `
+      <div class="empty"><div class="loading-dots">Loading projects from SQLite<span></span><span></span><span></span></div></div>
+    ` : pList.length === 0 ? `
+      <div class="empty">
+        <div class="orb"><svg width="20" height="20"><use href="#brain"/></svg></div>
+        <b>No projects found.</b>
+        <span>Create a project above to group memories, notes, and track tasks.</span>
+        <div style="margin-top:12px">
+          <button class="primary" id="emptyNewProjectBtn">＋ Create First Project</button>
+        </div>
+      </div>
+    ` : `
+      <div class="project-grid">
+        ${pList.map(p => `
+          <article class="project" data-project-id="${p.id}">
+            <div class="cover ${p.theme || 'blue'}">
+              <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+                <span class="status-badge status-${p.status || 'active'}">${p.status || 'active'}</span>
+                <span class="priority-badge priority-${p.priority || 'medium'}">${p.priority || 'medium'}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;width:100%">
+                <svg width="22" height="22"><use href="#brain"/></svg>
+                <span style="font-size:12px;font-weight:600">${p.deadline ? `◷ Due ${escapeHtml(p.deadline)}` : 'Active'}</span>
+              </div>
+            </div>
+            <div class="project-body">
+              <h3>${escapeHtml(p.title)}</h3>
+              <p>${escapeHtml(p.description || 'Project workspace context')}</p>
+              <div class="tags">${(p.tags || ['Project']).map(t => `<span>#${escapeHtml(t)}</span>`).join('')}</div>
+              <div class="progress"><span style="width:${p.progress || 0}%"></span></div>
+              <div class="project-stats-row">
+                <span><b>${p.notes_count || 0}</b> notes</span>
+                <span><b>${p.tasks_count || 0}</b> tasks</span>
+                <span><b>${p.memories_count || 0}</b> memories</span>
+              </div>
+              <div class="project-foot">
+                <span>${p.progress || 0}% complete</span>
+                <b style="color:var(--blue)">Open Workspace →</b>
+              </div>
+            </div>
+          </article>
+        `).join('')}
+      </div>
+    `}
+    <div class="activity">
+      <section class="card">
+        <p class="eyebrow">Timeline</p>
+        <h3>Recent project activity</h3>
+        ${recentGlobalActivities.length === 0 ? `
+          <p style="color:var(--muted);font-size:13px;padding:12px 0 0">No recent activity recorded yet. Actions in project workspaces will appear here.</p>
+        ` : recentGlobalActivities.map(a => `
+          <div class="activity-row">
+            <span style="color:var(--blue)">●</span>
+            <span>${escapeHtml(a.description)}</span>
+            <small>${formatDate(a.created_at)}</small>
+          </div>
+        `).join('')}
+      </section>
+      <section class="card">
+        <p class="eyebrow">Overview</p>
+        <h3>Workspace insights</h3>
+        <div style="display:flex;justify-content:space-between;margin-top:18px">
+          <b style="font-size:24px">${totalNotes}<br><small style="color:var(--muted);font-size:12px;font-weight:500">Total notes</small></b>
+          <b style="font-size:24px">${relMemories}<br><small style="color:var(--muted);font-size:12px;font-weight:500">Linked memories</small></b>
+          <b style="font-size:24px">${activeTasks}<br><small style="color:var(--muted);font-size:12px;font-weight:500">Active tasks</small></b>
+        </div>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid #edf2f6;font-size:12px;color:var(--muted)">
+          ✦ All metrics query live SQLite database records.
+        </div>
+      </section>
+    </div>
+  </div>`;
+}
+
+function projectWorkspaceView(detailData) {
+  const p = detailData.project;
+  const notes = detailData.notes || [];
+  const tasks = detailData.tasks || [];
+  const mems = detailData.memories || [];
+  const acts = detailData.activities || [];
+
+  return `<div class="content">
+    <div class="page-row" style="margin-bottom:14px">
+      <button class="secondary" id="backToProjectsBtn">← Back to all projects</button>
+      <div class="workspace-actions">
+        <button class="secondary" id="editProjectBtn">✎ Edit Project</button>
+        <button class="danger" id="deleteProjectBtn">⌫ Delete</button>
+        <button class="primary" id="askAiProjectTopBtn">💬 Ask AI About Project</button>
+      </div>
+    </div>
+
+    <!-- Workspace Header Card -->
+    <div class="workspace-header">
+      <div class="workspace-top-bar">
+        <div class="workspace-title-wrap">
+          <div class="stat-icon ${p.theme || 'blue'}" style="width:34px;height:34px;border-radius:9px;font-size:16px">□</div>
+          <div>
+            <h2>${escapeHtml(p.title)}</h2>
+            <div style="display:flex;gap:7px;align-items:center;margin-top:5px;flex-wrap:wrap">
+              <span class="status-badge status-${p.status || 'active'}">${p.status || 'active'}</span>
+              <span class="priority-badge priority-${p.priority || 'medium'}">${p.priority || 'medium'} priority</span>
+              ${p.deadline ? `<span style="font-size:13px;color:var(--muted)">◷ Deadline: <b>${escapeHtml(p.deadline)}</b></span>` : ''}
+            </div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <b style="font-size:16px;color:var(--blue)">${p.progress}% Complete</b>
+          <div style="font-size:13px;color:var(--muted);margin-top:2px">${p.completed_tasks_count} of ${p.tasks_count} tasks done</div>
+        </div>
+      </div>
+      <p style="color:#475569;font-size:14px;line-height:1.6;margin:8px 0 12px">${escapeHtml(p.description || 'No project description added yet.')}</p>
+      <div class="progress" style="height:6px;margin:8px 0"><span style="width:${p.progress}%"></span></div>
+      <div class="project-stats-row">
+        <span><b>${notes.length}</b> Notes</span>
+        <span><b>${tasks.length}</b> Tasks (${p.completed_tasks_count} done)</span>
+        <span><b>${mems.length}</b> Attached Memories</span>
+        <span><b>${acts.length}</b> Activities</span>
+        ${(p.tags || []).map(t => `<span style="color:#2563eb;background:#eef5ff">#${escapeHtml(t)}</span>`).join('')}
+      </div>
+    </div>
+
+    <!-- Sub-navigation Tabs -->
+    <div class="workspace-tabs">
+      <button class="${projectWorkspaceTab === 'overview' ? 'active' : ''}" data-wtab="overview">Overview</button>
+      <button class="${projectWorkspaceTab === 'notes' ? 'active' : ''}" data-wtab="notes">Notes <i>${notes.length}</i></button>
+      <button class="${projectWorkspaceTab === 'tasks' ? 'active' : ''}" data-wtab="tasks">Tasks <i>${tasks.length}</i></button>
+      <button class="${projectWorkspaceTab === 'memories' ? 'active' : ''}" data-wtab="memories">Memories <i>${mems.length}</i></button>
+      <button class="${projectWorkspaceTab === 'activity' ? 'active' : ''}" data-wtab="activity">Activity <i>${acts.length}</i></button>
+      <button class="${projectWorkspaceTab === 'ask_ai' ? 'active' : ''}" data-wtab="ask_ai" style="color:#2563eb">💬 Ask AI ✦</button>
+    </div>
+
+    <!-- Workspace Tab Content -->
+    ${renderProjectTabContent(p, notes, tasks, mems, acts)}
+  </div>`;
+}
+
+function renderProjectTabContent(p, notes, tasks, mems, acts) {
+  if (projectWorkspaceTab === 'overview') {
+    const pendingTasks = tasks.filter(t => t.status !== 'completed');
+    return `<div style="display:grid;grid-template-columns:1.5fr 1fr;gap:16px">
+      <div>
+        <section class="card" style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h3 style="margin:0">Active Tasks (${pendingTasks.length} pending)</h3>
+            <button class="btn-sm btn-approve" id="quickAddTaskBtn">＋ Add Task</button>
+          </div>
+          ${tasks.length === 0 ? `
+            <p style="color:var(--muted);font-size:13px">No tasks defined yet. Click "＋ Add Task" to organize milestones.</p>
+          ` : tasks.slice(0, 4).map(t => `
+            <div class="task-row ${t.status === 'completed' ? 'task-done' : ''}">
+              <input type="checkbox" class="task-check" data-task-id="${t.id}" ${t.status === 'completed' ? 'checked' : ''}>
+              <div class="task-title">${escapeHtml(t.title)}</div>
+              <span class="priority-badge priority-${t.priority}">${t.priority}</span>
+              ${t.due_date ? `<small style="color:var(--muted);font-size:12px">◷ ${escapeHtml(t.due_date)}</small>` : ''}
+            </div>
+          `).join('')}
+          ${tasks.length > 4 ? `<button class="link" style="margin-top:8px" onclick="setProjectTab('tasks')">View all ${tasks.length} tasks →</button>` : ''}
+        </section>
+
+        <section class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h3 style="margin:0">Project Notes (${notes.length})</h3>
+            <button class="btn-sm btn-approve" id="quickAddNoteBtn">＋ Add Note</button>
+          </div>
+          ${notes.length === 0 ? `
+            <p style="color:var(--muted);font-size:13px">No documentation notes yet. Click "＋ Add Note" to record ideas.</p>
+          ` : `
+            <div class="items-grid" style="grid-template-columns:1fr">
+              ${notes.slice(0, 3).map(n => `
+                <div class="item-card">
+                  <div class="item-head">
+                    <h4>${escapeHtml(n.title)}</h4>
+                    <small style="color:var(--muted)">◷ ${formatDate(n.created_at)}</small>
+                  </div>
+                  <p class="item-body">${escapeHtml(n.content)}</p>
+                  <div class="item-foot">
+                    <button class="btn-sm btn-approve" data-promote-note="${n.id}">★ Promote to Memory</button>
+                    <div class="item-actions">
+                      <button class="btn-sm" data-edit-note="${n.id}">✎ Edit</button>
+                      <button class="btn-sm btn-reject" data-delete-note="${n.id}">⌫ Delete</button>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+          ${notes.length > 3 ? `<button class="link" style="margin-top:8px" onclick="setProjectTab('notes')">View all ${notes.length} notes →</button>` : ''}
+        </section>
+      </div>
+
+      <div>
+        <section class="card" style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h3 style="margin:0">Linked Memories (${mems.length})</h3>
+            <button class="btn-sm btn-approve" id="quickAttachMemBtn">＋ Attach Memory</button>
+          </div>
+          ${mems.length === 0 ? `
+            <p style="color:var(--muted);font-size:13px">No memories linked yet. Link facts from your Memory Vault to ground AI answers in this project.</p>
+          ` : mems.slice(0, 3).map(m => `
+            <div style="padding:9px 0;border-top:1px solid #edf2f6">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span class="pill ${categoryClass(m.category)}">${escapeHtml(m.category)}</span>
+                <button class="btn-sm btn-reject" data-detach-mem="${m.id}" title="Detach from project">Detach</button>
+              </div>
+              <b style="display:block;font-size:14px;margin:6px 0 3px">${escapeHtml(m.title)}</b>
+              <p style="color:var(--muted);font-size:13px;margin:0;line-height:1.5">${escapeHtml(m.content.slice(0, 110))}...</p>
+            </div>
+          `).join('')}
+          ${mems.length > 3 ? `<button class="link" style="margin-top:8px" onclick="setProjectTab('memories')">View all ${mems.length} memories →</button>` : ''}
+        </section>
+
+        <section class="card">
+          <p class="eyebrow">Audit Trail</p>
+          <h3 style="margin:0 0 10px">Recent Activity</h3>
+          ${acts.length === 0 ? `
+            <p style="color:var(--muted);font-size:10px">No activity recorded yet.</p>
+          ` : acts.slice(0, 6).map(a => `
+            <div class="activity-row">
+              <span style="color:var(--blue)">●</span>
+              <span>${escapeHtml(a.description)}</span>
+              <small>${formatDate(a.created_at)}</small>
+            </div>
+          `).join('')}
+        </section>
+      </div>
+    </div>`;
+  }
+
+  if (projectWorkspaceTab === 'notes') {
+    return `<div>
+      <div class="page-row" style="margin-bottom:16px">
+        <div>
+          <p class="eyebrow">Documentation &amp; Context</p>
+          <h3 style="margin:2px 0 0">Project Notes (${notes.length})</h3>
+        </div>
+        <button class="primary" id="addNoteBtn">＋ Add Note</button>
+      </div>
+      ${notes.length === 0 ? `
+        <div class="empty">
+          <div class="orb"><svg width="20" height="20"><use href="#sparkle"/></svg></div>
+          <b>No notes yet.</b>
+          <span>Create structured notes to document requirements, architecture, and meeting takeaways.</span>
+          <div style="margin-top:12px"><button class="primary" id="emptyAddNoteBtn">＋ Add First Note</button></div>
+        </div>
+      ` : `
+        <div class="items-grid">
+          ${notes.map(n => `
+            <div class="item-card">
+              <div class="item-head">
+                <h4>${escapeHtml(n.title)}</h4>
+                <small style="color:var(--muted)">◷ ${formatDate(n.created_at)}</small>
+              </div>
+              <p class="item-body">${escapeHtml(n.content)}</p>
+              <div class="item-foot">
+                <button class="btn-sm btn-approve" data-promote-note="${n.id}">★ Promote to Memory</button>
+                <div class="item-actions">
+                  <button class="btn-sm" data-edit-note="${n.id}">✎ Edit</button>
+                  <button class="btn-sm btn-reject" data-delete-note="${n.id}">⌫ Delete</button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `}
+    </div>`;
+  }
+
+  if (projectWorkspaceTab === 'tasks') {
+    return `<div>
+      <div class="page-row" style="margin-bottom:16px">
+        <div>
+          <p class="eyebrow">Milestones &amp; Action Items</p>
+          <h3 style="margin:2px 0 0">Project Tasks (${tasks.length})</h3>
+        </div>
+        <button class="primary" id="addTaskBtn">＋ Add Task</button>
+      </div>
+      ${tasks.length === 0 ? `
+        <div class="empty">
+          <div class="orb"><svg width="20" height="20"><use href="#sparkle"/></svg></div>
+          <b>No tasks yet.</b>
+          <span>Add milestones with due dates and priorities to track project progress automatically.</span>
+          <div style="margin-top:12px"><button class="primary" id="emptyAddTaskBtn">＋ Add First Task</button></div>
+        </div>
+      ` : `
+        <div style="display:grid;gap:8px">
+          ${tasks.map(t => `
+            <div class="task-row ${t.status === 'completed' ? 'task-done' : ''}">
+              <input type="checkbox" class="task-check" data-task-id="${t.id}" ${t.status === 'completed' ? 'checked' : ''}>
+              <div style="flex:1">
+                <div class="task-title">${escapeHtml(t.title)}</div>
+                ${t.description ? `<div style="font-size:13px;color:var(--muted);margin-top:2px">${escapeHtml(t.description)}</div>` : ''}
+              </div>
+              <span class="status-badge status-${t.status}">${t.status}</span>
+              <span class="priority-badge priority-${t.priority}">${t.priority}</span>
+              ${t.due_date ? `<span class="task-meta">◷ Due: <b>${escapeHtml(t.due_date)}</b></span>` : ''}
+              <div class="item-actions">
+                <button class="btn-sm" data-edit-task="${t.id}">✎</button>
+                <button class="btn-sm btn-reject" data-delete-task="${t.id}">⌫</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `}
+    </div>`;
+  }
+
+  if (projectWorkspaceTab === 'memories') {
+    return `<div>
+      <div class="page-row" style="margin-bottom:16px">
+        <div>
+          <p class="eyebrow">Semantic Memory Links</p>
+          <h3 style="margin:2px 0 0">Attached Vault Memories (${mems.length})</h3>
+        </div>
+        <button class="primary" id="attachMemoryBtn">＋ Attach Memory from Vault</button>
+      </div>
+      <div class="state-banner warn" style="margin-bottom:14px">
+        <span>✦ Memories linked here provide dedicated context when querying PrivateMind about this project. Detaching removes the association without deleting the memory from your vault.</span>
+      </div>
+      ${mems.length === 0 ? `
+        <div class="empty">
+          <div class="orb"><svg width="20" height="20"><use href="#brain"/></svg></div>
+          <b>No memories attached to this project.</b>
+          <span>Click "＋ Attach Memory from Vault" to associate relevant facts with this project workspace.</span>
+          <div style="margin-top:12px"><button class="primary" id="emptyAttachMemoryBtn">＋ Attach Memory</button></div>
+        </div>
+      ` : `
+        <div class="memory-grid">
+          ${mems.map(m => `
+            <article class="memory">
+              <div class="memory-top">
+                <span class="pill ${categoryClass(m.category)}">${escapeHtml(m.category)}</span>
+                <div style="display:flex;gap:4px">
+                  <button class="btn-sm btn-reject" data-detach-mem="${m.id}" title="Detach from project">Detach</button>
+                  <button class="btn-sm btn-reject" data-delete-mem="${m.id}" title="Delete globally">⌫</button>
+                </div>
+              </div>
+              <h3>${escapeHtml(m.title)}</h3>
+              <p>${escapeHtml(m.content)}</p>
+              <div class="meta" style="display:flex;justify-content:space-between;align-items:center">
+                <span>◷ ${formatDate(m.updated_at || m.created_at)}</span>
+                <small style="color:var(--blue)">ID: #${m.id}</small>
+              </div>
+            </article>
+          `).join('')}
+        </div>
+      `}
+    </div>`;
+  }
+
+  if (projectWorkspaceTab === 'activity') {
+    return `<div>
+      <div class="page-row" style="margin-bottom:16px">
+        <div>
+          <p class="eyebrow">Audit Trail &amp; History</p>
+          <h3 style="margin:2px 0 0">Activity Log (${acts.length})</h3>
+        </div>
+      </div>
+      <section class="card">
+        ${acts.length === 0 ? `
+          <p style="color:var(--muted);font-size:13px">No activity recorded yet for this project.</p>
+        ` : acts.map(a => `
+          <div class="activity-row">
+            <span style="color:var(--blue)">●</span>
+            <span><b>${escapeHtml(a.description)}</b></span>
+            <small>${formatDate(a.created_at)}</small>
+          </div>
+        `).join('')}
+      </section>
+    </div>`;
+  }
+
+  if (projectWorkspaceTab === 'ask_ai') {
+    return `<div>
+      <div class="page-row" style="margin-bottom:14px">
+        <div>
+          <p class="eyebrow">Project Intelligence</p>
+          <h3 style="margin:2px 0 0">Ask PrivateMind About "${escapeHtml(p.title)}"</h3>
+        </div>
+        <button class="secondary" id="clearProjectChatBtn">Clear Thread</button>
+      </div>
+      <div class="chat-project-box">
+        <div class="suggestions" style="margin-bottom:12px">
+          <button data-proj-prompt="Summarize all current tasks and our next priorities">Summarize tasks &amp; priorities</button>
+          <button data-proj-prompt="What technical decisions and constraints are noted here?">Review technical notes</button>
+          <button data-proj-prompt="What hardware or tools are linked to this project?">Review linked hardware/tools</button>
+        </div>
+        <div class="chat-project-thread" id="projectChatThread">
+          ${projectAiChatMessages.length === 0 ? `
+            <div class="empty" style="padding:30px">
+              <div class="orb"><svg width="20" height="20"><use href="#sparkle"/></svg></div>
+              <b>Ask anything about this project.</b>
+              <span>Responses are strictly grounded in ${notes.length} notes, ${tasks.length} tasks, and ${mems.length} attached memories.</span>
+            </div>
+          ` : renderProjectChatMessages()}
+        </div>
+        <form id="projectChatForm" style="display:flex;gap:10px;align-items:center">
+          <input id="projectChatInput" placeholder="Ask about ${escapeHtml(p.title)}..." style="flex:1;height:50px;padding:0 16px;border:1px solid #cbd5e1;border-radius:12px;outline:0;font-size:15px;color:var(--navy)" autocomplete="off" required>
+          <button class="primary" type="submit" style="height:50px;padding:0 22px;font-size:15px;border-radius:12px">Ask AI ↑</button>
+        </form>
+      </div>
+    </div>`;
+  }
+
+  return '';
+}
+
+function renderProjectChatMessages() {
+  return projectAiChatMessages.map(msg => {
+    if (msg.role === 'me') {
+      return `<div class="message me">
+        <div class="message-avatar">R</div>
+        <div class="bubble">
+          <small>You</small>
+          <p>${escapeHtml(msg.text)}</p>
+        </div>
+      </div>`;
+    }
+
+    let citationsHtml = '';
+    if (msg.citations && msg.citations.length > 0) {
+      citationsHtml = `<div class="citations">${msg.citations.map(c => `<span>▣ ${escapeHtml(c.title || 'Context')}</span>`).join('')}</div>`;
+    }
+
+    let badge = msg.isError ? `<span class="badge-tag badge-error">Error</span>` :
+      `<span class="badge-tag badge-real">${escapeHtml(msg.provider || 'local')}</span>`;
+
+    return `<div class="message">
+      <div class="message-avatar"><svg width="16" height="16"><use href="#brain"/></svg></div>
+      <div class="bubble">
+        <small>PrivateMind ${badge}</small>
+        ${msg.loading ? `<p class="loading-dots">Grounded reasoning<span></span><span></span><span></span></p>` : `<p>${escapeHtml(msg.text)}</p>`}
+        ${citationsHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setProjectTab(tab) {
+  projectWorkspaceTab = tab;
+  render();
+}
+
+
+function privacy() {
+  return `<div class="content">
+    <div class="privacy-intro">
+      <div>
+        <p class="eyebrow">Your data, your control.</p>
+        <h2>Privacy should be a setting, not a promise.</h2>
+        <p>Choose what PrivateMind remembers. Persistent SQLite storage keeps your data local. Fact extraction flags candidate memories so you retain full oversight before permanent storage.</p>
+      </div>
+      <b style="white-space:nowrap;color:#1b65d0">◈ Local Database Active</b>
+    </div>
+    <div class="privacy-layout">
+      <div class="privacy-main">
+        <section class="card">
+          <p class="eyebrow">Memory settings</p>
+          <p class="card-desc">Control how your assistant learns from conversations.</p>
+          <div class="setting">
+            <span class="stat-icon blue">▣</span>
+            <div><b>Enable memory features</b><span>Allow PrivateMind to retrieve memories during chat.</span></div>
+            <button class="switch ${privacySettings.enableMemory ? 'on' : ''}" data-setting="enableMemory"><span></span></button>
+          </div>
+          <div class="setting">
+            <span class="stat-icon blue">✦</span>
+            <div><b>Automatic memory extraction</b><span>Identify candidate durable facts from user messages.</span></div>
+            <button class="switch ${privacySettings.autoCreation ? 'on' : ''}" data-setting="autoCreation"><span></span></button>
+          </div>
+          <div class="setting">
+            <span class="stat-icon blue">♢</span>
+            <div><b>Review before saving</b><span>Require manual approval before extracted facts enter SQLite.</span></div>
+            <button class="switch ${privacySettings.reviewBeforeSaving ? 'on' : ''}" data-setting="reviewBeforeSaving"><span></span></button>
+          </div>
+        </section>
+        <section class="card">
+          <p class="eyebrow">Data management</p>
+          <p class="card-desc">Manage, export, or permanently wipe your SQLite data.</p>
+          <button class="setting" id="privacyViewMemories" style="width:100%;border:0;background:transparent;text-align:left">
+            <span class="stat-icon blue">▣</span>
+            <div><b>View all memories</b><span>Browse and manage your ${memories.length} stored memories.</span></div>›
+          </button>
+          <button class="setting" id="privacyExportData" style="width:100%;border:0;background:transparent;text-align:left">
+            <span class="stat-icon blue">▣</span>
+            <div><b>Export my data</b><span>Download all stored memories as a JSON file.</span></div>›
+          </button>
+          <button class="setting" id="privacyDeleteAll" style="width:100%;border:0;background:transparent;text-align:left">
+            <span class="stat-icon rose">⌫</span>
+            <div><b>Delete all data</b><span>Permanently delete all stored memories from SQLite.</span></div>›
+          </button>
+        </section>
+      </div>
+      <aside class="card">
+        <p class="eyebrow">What is stored?</p>
+        ${[
+          ['Conversation context', 'Important facts, preferences and decisions.'],
+          ['Projects and work', 'Project details, notes and progress.'],
+          ['Personal preferences', 'Diet, learning goals and habits.'],
+          ['Vector embeddings', 'FAISS local index for semantic retrieval.']
+        ].map(x => `<div class="stored-row"><span style="color:#347de0">◆</span><div><b>${x[0]}</b><span>${x[1]}</span></div></div>`).join('')}
+        <div class="prototype">
+          <b>Local Persistence Note</b><br>
+          Memories are backed by SQLite at backend/data/privatemind.db. Data persists permanently across browser refreshes and backend restarts.
+        </div>
+      </aside>
+    </div>
+  </div>`;
+}
+
+function settings() {
+  return `<div class="content">
+    <div class="settings-hero">
+      <p class="eyebrow">Workspace preferences</p>
+      <h2>Make PrivateMind feel like yours.</h2>
+      <p>Configure developer options, inference settings, and UI preferences.</p>
+    </div>
+    <section class="card" style="max-width:690px;margin-bottom:15px">
+      <p class="eyebrow">Profile</p>
+      <p class="card-desc">Details shown across your workspace.</p>
+      <div class="profile-edit">
+        <div class="avatar" style="width:42px;height:42px;font-size:15px">R</div>
+        <div><b>Roeith R</b><small>roeith@example.com</small></div>
+        <button class="secondary" id="editProfileBtn">✎ Edit profile</button>
+      </div>
+    </section>
+    <section class="card" style="max-width:690px;margin-bottom:15px">
+      <p class="eyebrow">Backend Connection</p>
+      <p class="card-desc">Configure the FastAPI endpoint for PrivateMind.</p>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <input id="apiBaseUrlInput" value="${api.config.baseUrl}" style="flex:1;height:44px;padding:0 14px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;color:var(--navy)">
+        <button class="primary" id="saveApiBaseUrlBtn" style="height:44px;padding:0 18px;font-size:15px">Save URL</button>
+      </div>
+    </section>
+    <section class="card" style="max-width:690px">
+      <p class="eyebrow">Appearance</p>
+      <p class="card-desc">Light mode is optimized for the PrivateMind experience.</p>
+      <div class="source" style="border:1px solid #bcd6f8;background:#f5f9ff;padding:12px;border-radius:8px">
+        <b>Light and airy</b><br><small>Soft surfaces with high-contrast text and fluid animations.</small>
+      </div>
+    </section>
+  </div>`;
+}
+
+// --- Modals ---
+function showAddMemoryModal() {
+  const container = document.getElementById('modalContainer');
+  container.innerHTML = `
+    <div class="modal" id="addMemoryModal">
+      <form id="addMemoryForm">
+        <h2>Add to Memory Vault</h2>
+        <label>Memory title</label>
+        <input id="newMemTitle" placeholder="e.g. NVIDIA Hackathon Ideas" required>
+        <label>Category</label>
+        <select id="newMemCategory">
+          <option value="Projects">Projects</option>
+          <option value="Preferences">Preferences</option>
+          <option value="Skills">Skills</option>
+          <option value="Important">Important</option>
+          <option value="Personal">Personal</option>
+          <option value="General">General</option>
+        </select>
+        <label>What should PrivateMind remember?</label>
+        <textarea id="newMemContent" rows="4" placeholder="Enter durable factual knowledge..." required></textarea>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="cancelAddMem">Cancel</button>
+          <button type="submit" class="primary">Save memory</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.getElementById('cancelAddMem').onclick = () => { container.innerHTML = ''; };
+  document.getElementById('addMemoryForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('newMemTitle').value.trim();
+    const category = document.getElementById('newMemCategory').value;
+    const content = document.getElementById('newMemContent').value.trim();
+    if (!title || !content) return;
+    try {
+      await api.createMemory({ title, content, category, source: 'manual' });
+      container.innerHTML = '';
+      await loadMemories();
+    } catch (err) {
+      alert('Error saving memory: ' + err.message);
+    }
+  };
+}
+
+function showEditMemoryModal(m) {
+  const container = document.getElementById('modalContainer');
+  container.innerHTML = `
+    <div class="modal" id="editMemoryModal">
+      <form id="editMemoryForm">
+        <h2>Edit Memory</h2>
+        <label>Memory title</label>
+        <input id="editMemTitle" value="${escapeHtml(m.title)}" required>
+        <label>Category</label>
+        <select id="editMemCategory">
+          ${['Projects', 'Preferences', 'Skills', 'Important', 'Personal', 'General'].map(c => `
+            <option value="${c}" ${m.category === c ? 'selected' : ''}>${c}</option>
+          `).join('')}
+        </select>
+        <label>Content</label>
+        <textarea id="editMemContent" rows="4" required>${escapeHtml(m.text)}</textarea>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="cancelEditMem">Cancel</button>
+          <button type="submit" class="primary">Save changes</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.getElementById('cancelEditMem').onclick = () => { container.innerHTML = ''; };
+  document.getElementById('editMemoryForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('editMemTitle').value.trim();
+    const category = document.getElementById('editMemCategory').value;
+    const content = document.getElementById('editMemContent').value.trim();
+    if (!title || !content) return;
+    try {
+      const updated = await api.updateMemory(m.id, { title, content, category });
+      container.innerHTML = '';
+      selected = mapMemory(updated);
+      await loadMemories();
+    } catch (err) {
+      alert('Error updating memory: ' + err.message);
+    }
+  };
+}
+
+function showNewProjectModal() {
+  const container = document.getElementById('modalContainer');
+  container.innerHTML = `
+    <div class="modal" id="newProjectModal">
+      <form id="newProjectForm">
+        <h2>Create New Project</h2>
+        <label>Project Title</label>
+        <input id="newProjTitle" placeholder="e.g. Smart Campus IoT Monitoring" required>
+        <label>Description</label>
+        <textarea id="newProjDesc" rows="3" placeholder="Overview of goals, scope, and technical context..."></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label>Status</label>
+            <select id="newProjStatus">
+              <option value="active" selected>Active</option>
+              <option value="planning">Planning</option>
+              <option value="completed">Completed</option>
+              <option value="on_hold">On Hold</option>
+            </select>
+          </div>
+          <div>
+            <label>Priority</label>
+            <select id="newProjPriority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label>Target Deadline (Optional)</label>
+            <input type="date" id="newProjDeadline">
+          </div>
+          <div>
+            <label>Cover Theme</label>
+            <select id="newProjTheme">
+              <option value="blue" selected>Blue Gradient</option>
+              <option value="teal">Teal Gradient</option>
+              <option value="sand">Sand Gradient</option>
+              <option value="rose">Rose Gradient</option>
+              <option value="violet">Violet Gradient</option>
+            </select>
+          </div>
+        </div>
+        <label>Tags (Comma-separated)</label>
+        <input id="newProjTags" placeholder="e.g. IoT, Hardware, Python">
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="cancelNewProj">Cancel</button>
+          <button type="submit" class="primary">Create Project</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.getElementById('cancelNewProj').onclick = () => { container.innerHTML = ''; };
+  document.getElementById('newProjectForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('newProjTitle').value.trim();
+    const description = document.getElementById('newProjDesc').value.trim();
+    const status = document.getElementById('newProjStatus').value;
+    const priority = document.getElementById('newProjPriority').value;
+    const deadline = document.getElementById('newProjDeadline').value || null;
+    const theme = document.getElementById('newProjTheme').value;
+    const rawTags = document.getElementById('newProjTags').value;
+    const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
+
+    if (!title) return;
+    try {
+      const created = await api.createProject({ title, description, status, priority, deadline, tags, theme });
+      container.innerHTML = '';
+      await loadProjects();
+      if (created && created.id) {
+        await openProjectWorkspace(created.id);
+      }
+    } catch (err) {
+      alert('Error creating project: ' + err.message);
+    }
+  };
+}
+
+function showEditProjectModal(p) {
+  const container = document.getElementById('modalContainer');
+  const tagStr = (p.tags || []).join(', ');
+  container.innerHTML = `
+    <div class="modal" id="editProjectModal">
+      <form id="editProjectForm">
+        <h2>Edit Project Workspace</h2>
+        <label>Project Title</label>
+        <input id="editProjTitle" value="${escapeHtml(p.title)}" required>
+        <label>Description</label>
+        <textarea id="editProjDesc" rows="3">${escapeHtml(p.description || '')}</textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label>Status</label>
+            <select id="editProjStatus">
+              <option value="active" ${p.status === 'active' ? 'selected' : ''}>Active</option>
+              <option value="planning" ${p.status === 'planning' ? 'selected' : ''}>Planning</option>
+              <option value="completed" ${p.status === 'completed' ? 'selected' : ''}>Completed</option>
+              <option value="on_hold" ${p.status === 'on_hold' ? 'selected' : ''}>On Hold</option>
+            </select>
+          </div>
+          <div>
+            <label>Priority</label>
+            <select id="editProjPriority">
+              <option value="low" ${p.priority === 'low' ? 'selected' : ''}>Low</option>
+              <option value="medium" ${p.priority === 'medium' ? 'selected' : ''}>Medium</option>
+              <option value="high" ${p.priority === 'high' ? 'selected' : ''}>High</option>
+              <option value="urgent" ${p.priority === 'urgent' ? 'selected' : ''}>Urgent</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label>Target Deadline</label>
+            <input type="date" id="editProjDeadline" value="${escapeHtml(p.deadline || '')}">
+          </div>
+          <div>
+            <label>Cover Theme</label>
+            <select id="editProjTheme">
+              <option value="blue" ${p.theme === 'blue' ? 'selected' : ''}>Blue Gradient</option>
+              <option value="teal" ${p.theme === 'teal' ? 'selected' : ''}>Teal Gradient</option>
+              <option value="sand" ${p.theme === 'sand' ? 'selected' : ''}>Sand Gradient</option>
+              <option value="rose" ${p.theme === 'rose' ? 'selected' : ''}>Rose Gradient</option>
+              <option value="violet" ${p.theme === 'violet' ? 'selected' : ''}>Violet Gradient</option>
+            </select>
+          </div>
+        </div>
+        <label>Tags (Comma-separated)</label>
+        <input id="editProjTags" value="${escapeHtml(tagStr)}">
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="cancelEditProj">Cancel</button>
+          <button type="submit" class="primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.getElementById('cancelEditProj').onclick = () => { container.innerHTML = ''; };
+  document.getElementById('editProjectForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('editProjTitle').value.trim();
+    const description = document.getElementById('editProjDesc').value.trim();
+    const status = document.getElementById('editProjStatus').value;
+    const priority = document.getElementById('editProjPriority').value;
+    const deadline = document.getElementById('editProjDeadline').value || null;
+    const theme = document.getElementById('editProjTheme').value;
+    const rawTags = document.getElementById('editProjTags').value;
+    const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
+
+    if (!title) return;
+    try {
+      await api.updateProject(p.id, { title, description, status, priority, deadline, theme, tags });
+      container.innerHTML = '';
+      await reloadActiveProject();
+      await loadProjects();
+    } catch (err) {
+      alert('Error updating project: ' + err.message);
+    }
+  };
+}
+
+function showNewNoteModal(projectId) {
+  const container = document.getElementById('modalContainer');
+  container.innerHTML = `
+    <div class="modal" id="newNoteModal">
+      <form id="newNoteForm">
+        <h2>Add Project Note</h2>
+        <label>Note Title</label>
+        <input id="newNoteTitle" placeholder="e.g. Architecture Decisions &amp; API Spec" required>
+        <label>Content</label>
+        <textarea id="newNoteContent" rows="6" placeholder="Write markdown or structured notes..." required></textarea>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="cancelNewNote">Cancel</button>
+          <button type="submit" class="primary">Save Note</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.getElementById('cancelNewNote').onclick = () => { container.innerHTML = ''; };
+  document.getElementById('newNoteForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('newNoteTitle').value.trim();
+    const content = document.getElementById('newNoteContent').value.trim();
+    if (!title || !content) return;
+    try {
+      await api.addProjectNote(projectId, { title, content });
+      container.innerHTML = '';
+      await reloadActiveProject();
+    } catch (err) {
+      alert('Error adding note: ' + err.message);
+    }
+  };
+}
+
+function showEditNoteModal(projectId, note) {
+  const container = document.getElementById('modalContainer');
+  container.innerHTML = `
+    <div class="modal" id="editNoteModal">
+      <form id="editNoteForm">
+        <h2>Edit Project Note</h2>
+        <label>Note Title</label>
+        <input id="editNoteTitle" value="${escapeHtml(note.title)}" required>
+        <label>Content</label>
+        <textarea id="editNoteContent" rows="6" required>${escapeHtml(note.content)}</textarea>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="cancelEditNote">Cancel</button>
+          <button type="submit" class="primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.getElementById('cancelEditNote').onclick = () => { container.innerHTML = ''; };
+  document.getElementById('editNoteForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('editNoteTitle').value.trim();
+    const content = document.getElementById('editNoteContent').value.trim();
+    if (!title || !content) return;
+    try {
+      await api.updateProjectNote(projectId, note.id, { title, content });
+      container.innerHTML = '';
+      await reloadActiveProject();
+    } catch (err) {
+      alert('Error updating note: ' + err.message);
+    }
+  };
+}
+
+function showNewTaskModal(projectId) {
+  const container = document.getElementById('modalContainer');
+  container.innerHTML = `
+    <div class="modal" id="newTaskModal">
+      <form id="newTaskForm">
+        <h2>Add Project Task</h2>
+        <label>Task Title</label>
+        <input id="newTaskTitle" placeholder="e.g. Implement FAISS vector index caching" required>
+        <label>Description (Optional)</label>
+        <textarea id="newTaskDesc" rows="2" placeholder="Details or acceptance criteria..."></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label>Priority</label>
+            <select id="newTaskPriority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+          <div>
+            <label>Status</label>
+            <select id="newTaskStatus">
+              <option value="todo" selected>To Do</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        </div>
+        <label>Due Date (Optional)</label>
+        <input type="date" id="newTaskDueDate">
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="cancelNewTask">Cancel</button>
+          <button type="submit" class="primary">Add Task</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.getElementById('cancelNewTask').onclick = () => { container.innerHTML = ''; };
+  document.getElementById('newTaskForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('newTaskTitle').value.trim();
+    const description = document.getElementById('newTaskDesc').value.trim();
+    const priority = document.getElementById('newTaskPriority').value;
+    const status = document.getElementById('newTaskStatus').value;
+    const due_date = document.getElementById('newTaskDueDate').value || null;
+    if (!title) return;
+    try {
+      await api.addProjectTask(projectId, { title, description, priority, status, due_date });
+      container.innerHTML = '';
+      await reloadActiveProject();
+      await loadProjects();
+    } catch (err) {
+      alert('Error adding task: ' + err.message);
+    }
+  };
+}
+
+function showEditTaskModal(projectId, task) {
+  const container = document.getElementById('modalContainer');
+  container.innerHTML = `
+    <div class="modal" id="editTaskModal">
+      <form id="editTaskForm">
+        <h2>Edit Project Task</h2>
+        <label>Task Title</label>
+        <input id="editTaskTitle" value="${escapeHtml(task.title)}" required>
+        <label>Description</label>
+        <textarea id="editTaskDesc" rows="2">${escapeHtml(task.description || '')}</textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label>Priority</label>
+            <select id="editTaskPriority">
+              <option value="low" ${task.priority === 'low' ? 'selected' : ''}>Low</option>
+              <option value="medium" ${task.priority === 'medium' ? 'selected' : ''}>Medium</option>
+              <option value="high" ${task.priority === 'high' ? 'selected' : ''}>High</option>
+              <option value="urgent" ${task.priority === 'urgent' ? 'selected' : ''}>Urgent</option>
+            </select>
+          </div>
+          <div>
+            <label>Status</label>
+            <select id="editTaskStatus">
+              <option value="todo" ${task.status === 'todo' ? 'selected' : ''}>To Do</option>
+              <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+              <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Completed</option>
+            </select>
+          </div>
+        </div>
+        <label>Due Date</label>
+        <input type="date" id="editTaskDueDate" value="${escapeHtml(task.due_date || '')}">
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="cancelEditTask">Cancel</button>
+          <button type="submit" class="primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.getElementById('cancelEditTask').onclick = () => { container.innerHTML = ''; };
+  document.getElementById('editTaskForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('editTaskTitle').value.trim();
+    const description = document.getElementById('editTaskDesc').value.trim();
+    const priority = document.getElementById('editTaskPriority').value;
+    const status = document.getElementById('editTaskStatus').value;
+    const due_date = document.getElementById('editTaskDueDate').value || null;
+    if (!title) return;
+    try {
+      await api.updateProjectTask(projectId, task.id, { title, description, priority, status, due_date });
+      container.innerHTML = '';
+      await reloadActiveProject();
+      await loadProjects();
+    } catch (err) {
+      alert('Error updating task: ' + err.message);
+    }
+  };
+}
+
+async function showAttachMemoryModal(projectId) {
+  const container = document.getElementById('modalContainer');
+  container.innerHTML = `<div class="modal"><div class="empty"><div class="loading-dots">Loading Memory Vault<span></span><span></span><span></span></div></div></div>`;
+  try {
+    const allMemories = await api.getMemories({});
+    const linkedIds = new Set((activeProjectDetail && activeProjectDetail.memories ? activeProjectDetail.memories.map(m => m.id) : []));
+    const available = allMemories.filter(m => !linkedIds.has(m.id));
+
+    container.innerHTML = `
+      <div class="modal" id="attachMemoryModal">
+        <div style="width:min(100%,560px);max-height:85vh;display:flex;flex-direction:column;padding:22px;background:#fff;border:1px solid #dce8f3;border-radius:15px;box-shadow:0 20px 70px rgba(12,37,65,.23)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h2 style="margin:0;font-size:20px">Attach Memory to Project</h2>
+            <button class="icon" id="closeAttachMem">×</button>
+          </div>
+          <p style="font-size:13px;color:var(--muted);margin:0 0 14px">Select a memory from your persistent SQLite Vault to link with this project workspace.</p>
+          <div class="search-field" style="width:100%;margin-bottom:14px">
+            ⌕ <input id="filterAttachInput" placeholder="Filter available memories...">
+          </div>
+          <div id="attachListContainer" style="flex:1;overflow-y:auto;display:grid;gap:8px;padding-right:4px">
+            ${available.length === 0 ? `
+              <div class="empty" style="padding:20px"><b>All existing memories are already attached to this project.</b></div>
+            ` : available.map(m => `
+              <div class="attach-item" data-mem-id="${m.id}" style="padding:12px 14px;border:1px solid #e1ebf5;border-radius:10px;background:#fbfdff;display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <span class="pill ${categoryClass(m.category)}">${escapeHtml(m.category)}</span>
+                    <b style="font-size:14px">${escapeHtml(m.title)}</b>
+                  </div>
+                  <p style="font-size:13px;color:var(--muted);margin:4px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.content)}</p>
+                </div>
+                <button class="btn-sm btn-approve" data-do-attach="${m.id}">Attach ＋</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('closeAttachMem').onclick = () => { container.innerHTML = ''; };
+
+    const filterInput = document.getElementById('filterAttachInput');
+    if (filterInput) {
+      filterInput.oninput = () => {
+        const query = filterInput.value.toLowerCase().trim();
+        document.querySelectorAll('.attach-item').forEach(el => {
+          const text = el.textContent.toLowerCase();
+          el.style.display = text.includes(query) ? 'flex' : 'none';
+        });
+      };
+    }
+
+    document.querySelectorAll('[data-do-attach]').forEach(btn => {
+      btn.onclick = async () => {
+        const memId = btn.dataset.doAttach;
+        try {
+          btn.textContent = 'Linking...';
+          btn.disabled = true;
+          await api.attachMemoryToProject(projectId, memId);
+          container.innerHTML = '';
+          await reloadActiveProject();
+          await loadProjects();
+        } catch (err) {
+          alert('Failed to attach memory: ' + err.message);
+          btn.textContent = 'Attach ＋';
+          btn.disabled = false;
+        }
+      };
+    });
+
+  } catch (err) {
+    container.innerHTML = '';
+    alert('Error loading vault memories: ' + err.message);
+  }
+}
+
+
+// --- Render & Binding ---
+function render() {
+  document.getElementById('view').innerHTML =
+    page === 'workspace' ? workspace() :
+    page === 'memories' ? memoriesView() :
+    page === 'projects' ? projects() :
+    page === 'privacy' ? privacy() : settings();
+  bind();
+}
+
+function bind() {
+  // Mobile drawer bindings
+  const mobileBtn = document.getElementById('mobileMenuBtn');
+  if (mobileBtn) {
+    mobileBtn.onclick = () => toggleMobileDrawer();
+  }
+  const overlay = document.getElementById('sidebarOverlay');
+  if (overlay) {
+    overlay.onclick = () => closeMobileDrawer();
+  }
+
+  // Navigation
+  document.querySelectorAll('.nav button').forEach(b => {
+    b.onclick = () => setPage(b.dataset.page);
+  });
+
+  // Workspace Chat Form
+  const form = document.getElementById('chatForm');
+  if (form) {
+    form.onsubmit = e => {
+      e.preventDefault();
+      const input = document.getElementById('chatInput');
+      if (input) {
+        send(input.value);
+        input.value = '';
+      }
+    };
+  }
+
+  // Suggestions
+  document.querySelectorAll('[data-prompt]').forEach(b => {
+    b.onclick = () => {
+      const input = document.getElementById('chatInput');
+      if (input) {
+        input.value = b.dataset.prompt;
+        input.focus();
+      }
+    };
+  });
+
+  // New Chat Button
+  const newChatBtn = document.getElementById('newChatBtn');
+  if (newChatBtn) {
+    newChatBtn.onclick = () => {
+      currentConversationId = 'conv_' + Date.now();
+      chatMessages = [];
+      relevantSourcesCount = 0;
+      render();
+    };
+  }
+
+  // Bind candidate approvals in chat
+  bindChatEvents();
+
+  // Memory Vault
+  document.querySelectorAll('[data-filter]').forEach(b => {
+    b.onclick = () => {
+      filter = b.dataset.filter;
+      loadMemories();
+    };
+  });
+
+  document.querySelectorAll('[data-memory]').forEach(c => {
+    c.onclick = () => {
+      selected = memories.find(m => m.id == c.dataset.memory);
+      render();
+    };
+  });
+
+  document.querySelectorAll('[data-delete]').forEach(b => {
+    b.onclick = async e => {
+      e.stopPropagation();
+      const id = b.dataset.delete;
+      if (confirm('Permanently delete this memory from SQLite?')) {
+        try {
+          await api.deleteMemory(id);
+          if (selected && selected.id == id) selected = null;
+          await loadMemories();
+        } catch (err) {
+          alert('Delete failed: ' + err.message);
+        }
+      }
+    };
+  });
+
+  const close = document.getElementById('closeDetail');
+  if (close) close.onclick = () => { selected = null; render(); };
+
+  const editBtn = document.getElementById('detailEdit');
+  if (editBtn && selected) editBtn.onclick = () => showEditMemoryModal(selected);
+
+  const dd = document.getElementById('detailDelete');
+  if (dd && selected) {
+    dd.onclick = async () => {
+      if (confirm('Permanently delete this memory from SQLite?')) {
+        try {
+          await api.deleteMemory(selected.id);
+          selected = null;
+          await loadMemories();
+        } catch (err) {
+          alert('Delete failed: ' + err.message);
+        }
+      }
+    };
+  }
+
+  const add = document.getElementById('addMemory');
+  if (add) add.onclick = () => showAddMemoryModal();
+
+  const seedBtn = document.getElementById('seedDemoMemoriesBtn');
+  if (seedBtn) seedBtn.onclick = () => seedInitialMemories();
+
+  const retryMem = document.getElementById('retryMemories');
+  if (retryMem) retryMem.onclick = () => loadMemories();
+
+  const refreshMem = document.getElementById('refreshMemoriesBtn');
+  if (refreshMem) refreshMem.onclick = () => { searchQuery = ''; loadMemories(); };
+
+  const viewAll = document.getElementById('viewAll');
+  if (viewAll) viewAll.onclick = () => { filter = 'All'; searchQuery = ''; loadMemories(); };
+
+  // Memory search with debounce and focus restoration
+  const search = document.getElementById('memorySearch');
+  if (search) {
+    let debounceTimer;
+    search.oninput = () => {
+      clearTimeout(debounceTimer);
+      searchQuery = search.value;
+      debounceTimer = setTimeout(async () => {
+        try {
+          const res = await api.getMemories({ search: searchQuery.trim() || null, category: filter === 'All' ? null : filter });
+          memories = res.map(mapMemory);
+          render();
+          const s = document.getElementById('memorySearch');
+          if (s) {
+            s.focus();
+            s.setSelectionRange(s.value.length, s.value.length);
+          }
+        } catch (err) {
+          console.error('Search error:', err);
+        }
+      }, 250);
+    };
+  }
+
+  // Saved Topics in Workspace sidebar
+  document.querySelectorAll('[data-topic]').forEach(b => {
+    b.onclick = () => {
+      const topic = b.dataset.topic;
+      currentConversationId = 'conv_' + topic.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+      const input = document.getElementById('chatInput');
+      if (input) {
+        input.value = `Tell me what you remember about: ${topic}`;
+        input.focus();
+      }
+    };
+  });
+
+  // Projects Grid & Search Bindings
+  const newProj = document.getElementById('newProjectBtn');
+  if (newProj) newProj.onclick = () => showNewProjectModal();
+
+  const emptyNewProj = document.getElementById('emptyNewProjectBtn');
+  if (emptyNewProj) emptyNewProj.onclick = () => showNewProjectModal();
+
+  // Project search with debounce
+  const projSearchInput = document.getElementById('projectSearchInput');
+  if (projSearchInput) {
+    let projSearchDebounce;
+    projSearchInput.oninput = () => {
+      clearTimeout(projSearchDebounce);
+      projectSearchQuery = projSearchInput.value;
+      projSearchDebounce = setTimeout(async () => {
+        await loadProjects();
+        const inp = document.getElementById('projectSearchInput');
+        if (inp) {
+          inp.focus();
+          inp.setSelectionRange(inp.value.length, inp.value.length);
+        }
+      }, 250);
+    };
+  }
+
+  // Project status filter buttons
+  document.querySelectorAll('[data-pfilter]').forEach(b => {
+    b.onclick = () => {
+      projectStatusFilter = b.dataset.pfilter;
+      loadProjects();
+    };
+  });
+
+  // Project card click -> open workspace
+  document.querySelectorAll('.project[data-project-id]').forEach(card => {
+    card.onclick = () => {
+      const pid = card.dataset.projectId;
+      openProjectWorkspace(pid);
+    };
+  });
+
+  // Workspace Navigation & Header Buttons
+  const backBtn = document.getElementById('backToProjectsBtn');
+  if (backBtn) backBtn.onclick = () => closeProjectWorkspace();
+
+  document.querySelectorAll('[data-wtab]').forEach(b => {
+    b.onclick = () => setProjectTab(b.dataset.wtab);
+  });
+
+  const editProjBtn = document.getElementById('editProjectBtn');
+  if (editProjBtn && activeProjectDetail && activeProjectDetail.project) {
+    editProjBtn.onclick = () => showEditProjectModal(activeProjectDetail.project);
+  }
+
+  const deleteProjBtn = document.getElementById('deleteProjectBtn');
+  if (deleteProjBtn && activeProjectId) {
+    deleteProjBtn.onclick = async () => {
+      if (confirm(`Permanently delete project "${activeProjectDetail.project.title}"?\n\nNote: Unrelated memories in your vault will NOT be deleted.`)) {
+        try {
+          await api.deleteProject(activeProjectId);
+          closeProjectWorkspace();
+        } catch (err) {
+          alert('Failed to delete project: ' + err.message);
+        }
+      }
+    };
+  }
+
+  const askAiTopBtn = document.getElementById('askAiProjectTopBtn');
+  if (askAiTopBtn) {
+    askAiTopBtn.onclick = () => {
+      setProjectTab('ask_ai');
+      const inp = document.getElementById('projectChatInput');
+      if (inp) inp.focus();
+    };
+  }
+
+  // Notes actions
+  const addNoteBtn = document.getElementById('addNoteBtn') || document.getElementById('emptyAddNoteBtn') || document.getElementById('quickAddNoteBtn');
+  if (addNoteBtn && activeProjectId) {
+    addNoteBtn.onclick = () => showNewNoteModal(activeProjectId);
+  }
+
+  document.querySelectorAll('[data-edit-note]').forEach(b => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const nId = parseInt(b.dataset.editNote, 10);
+      const note = (activeProjectDetail.notes || []).find(n => n.id === nId);
+      if (note) showEditNoteModal(activeProjectId, note);
+    };
+  });
+
+  document.querySelectorAll('[data-delete-note]').forEach(b => {
+    b.onclick = async (e) => {
+      e.stopPropagation();
+      const nId = parseInt(b.dataset.deleteNote, 10);
+      if (confirm('Delete this project note?')) {
+        try {
+          await api.deleteProjectNote(activeProjectId, nId);
+          await reloadActiveProject();
+        } catch (err) {
+          alert('Failed to delete note: ' + err.message);
+        }
+      }
+    };
+  });
+
+  document.querySelectorAll('[data-promote-note]').forEach(b => {
+    b.onclick = async (e) => {
+      e.stopPropagation();
+      const nId = parseInt(b.dataset.promoteNote, 10);
+      try {
+        b.textContent = 'Saving to Vault...';
+        b.disabled = true;
+        await api.convertNoteToMemory(activeProjectId, nId);
+        alert('✓ Note successfully promoted to persistent memory and indexed in FAISS vector store!');
+        await reloadActiveProject();
+        await loadMemories();
+      } catch (err) {
+        alert('Failed to promote note: ' + err.message);
+        b.textContent = '★ Promote to Memory';
+        b.disabled = false;
+      }
+    };
+  });
+
+  // Tasks actions
+  const addTaskBtn = document.getElementById('addTaskBtn') || document.getElementById('emptyAddTaskBtn') || document.getElementById('quickAddTaskBtn');
+  if (addTaskBtn && activeProjectId) {
+    addTaskBtn.onclick = () => showNewTaskModal(activeProjectId);
+  }
+
+  document.querySelectorAll('.task-check').forEach(chk => {
+    chk.onchange = async () => {
+      const tId = parseInt(chk.dataset.taskId, 10);
+      const newStatus = chk.checked ? 'completed' : 'todo';
+      try {
+        await api.updateProjectTask(activeProjectId, tId, { status: newStatus });
+        await reloadActiveProject();
+        await loadProjects();
+      } catch (err) {
+        alert('Failed to update task status: ' + err.message);
+        chk.checked = !chk.checked;
+      }
+    };
+  });
+
+  document.querySelectorAll('[data-edit-task]').forEach(b => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const tId = parseInt(b.dataset.editTask, 10);
+      const task = (activeProjectDetail.tasks || []).find(t => t.id === tId);
+      if (task) showEditTaskModal(activeProjectId, task);
+    };
+  });
+
+  document.querySelectorAll('[data-delete-task]').forEach(b => {
+    b.onclick = async (e) => {
+      e.stopPropagation();
+      const tId = parseInt(b.dataset.deleteTask, 10);
+      if (confirm('Delete this task?')) {
+        try {
+          await api.deleteProjectTask(activeProjectId, tId);
+          await reloadActiveProject();
+          await loadProjects();
+        } catch (err) {
+          alert('Failed to delete task: ' + err.message);
+        }
+      }
+    };
+  });
+
+  // Memories actions
+  const attachMemBtn = document.getElementById('attachMemoryBtn') || document.getElementById('emptyAttachMemoryBtn') || document.getElementById('quickAttachMemBtn');
+  if (attachMemBtn && activeProjectId) {
+    attachMemBtn.onclick = () => showAttachMemoryModal(activeProjectId);
+  }
+
+  document.querySelectorAll('[data-detach-mem]').forEach(b => {
+    b.onclick = async (e) => {
+      e.stopPropagation();
+      const mId = parseInt(b.dataset.detachMem, 10);
+      if (confirm('Detach this memory from this project?\n\nNote: The memory will remain safely in your Memory Vault.')) {
+        try {
+          await api.detachMemoryFromProject(activeProjectId, mId);
+          await reloadActiveProject();
+          await loadProjects();
+        } catch (err) {
+          alert('Failed to detach memory: ' + err.message);
+        }
+      }
+    };
+  });
+
+  // Project AI Chat Form
+  const projChatForm = document.getElementById('projectChatForm');
+  if (projChatForm && activeProjectId) {
+    projChatForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('projectChatInput');
+      if (!input || !input.value.trim() || isSendingProjectAiChat) return;
+      const text = input.value.trim();
+      input.value = '';
+      isSendingProjectAiChat = true;
+
+      projectAiChatMessages.push({ role: 'me', text });
+      const loadingIdx = projectAiChatMessages.push({
+        role: 'assistant',
+        text: '',
+        loading: true
+      }) - 1;
+      render();
+
+      try {
+        const res = await api.askAIAboutProject(activeProjectId, {
+          message: text,
+          conversationId: 'proj_' + activeProjectId
+        });
+        projectAiChatMessages[loadingIdx] = {
+          role: 'assistant',
+          text: res.response,
+          provider: res.provider,
+          model: res.model,
+          citations: res.memories_retrieved || [],
+          loading: false
+        };
+      } catch (err) {
+        projectAiChatMessages[loadingIdx] = {
+          role: 'assistant',
+          text: 'Failed to complete project AI request: ' + err.message,
+          isError: true,
+          loading: false
+        };
+      } finally {
+        isSendingProjectAiChat = false;
+        render();
+        const threadEl = document.getElementById('projectChatThread');
+        if (threadEl) threadEl.scrollTop = threadEl.scrollHeight;
+      }
+    };
+  }
+
+  const clearProjChat = document.getElementById('clearProjectChatBtn');
+  if (clearProjChat) {
+    clearProjChat.onclick = () => {
+      projectAiChatMessages = [];
+      render();
+    };
+  }
+
+  document.querySelectorAll('[data-proj-prompt]').forEach(b => {
+    b.onclick = () => {
+      const input = document.getElementById('projectChatInput');
+      if (input) {
+        input.value = b.dataset.projPrompt;
+        input.focus();
+      }
+    };
+  });
+
+
+  // Privacy Center
+  document.querySelectorAll('[data-setting]').forEach(b => {
+    b.onclick = async () => {
+      const setting = b.dataset.setting;
+      privacySettings[setting] = !privacySettings[setting];
+      b.classList.toggle('on', privacySettings[setting]);
+      try {
+        await api.updateSettings({
+          memory_enabled: privacySettings.enableMemory,
+          auto_extraction: privacySettings.autoCreation,
+          review_before_save: privacySettings.reviewBeforeSaving,
+        });
+      } catch (err) {
+        console.warn('Failed to sync privacy setting with backend:', err.message);
+      }
+    };
+  });
+
+  const privMem = document.getElementById('privacyViewMemories');
+  if (privMem) privMem.onclick = () => setPage('memories');
+
+  const privExport = document.getElementById('privacyExportData');
+  if (privExport) {
+    privExport.onclick = async () => {
+      try {
+        const exportData = await api.exportData();
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `privatemind_export_${exportData.user_id || 'user'}_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert('Export error: ' + err.message);
+      }
+    };
+  }
+
+  const privDelAll = document.getElementById('privacyDeleteAll');
+  if (privDelAll) {
+    privDelAll.onclick = async () => {
+      if (confirm('WARNING: Are you sure you want to permanently delete ALL memories and conversation data? This cannot be undone.')) {
+        try {
+          await api.deleteAllMemories();
+          selected = null;
+          searchQuery = '';
+          sessionStorage.setItem('privatemind_seeded', 'true');
+          await loadMemories();
+          alert('All memories and embeddings permanently deleted from SQLite database and FAISS index.');
+        } catch (err) {
+          alert('Deletion error: ' + err.message);
+        }
+      }
+    };
+  }
+
+  // Settings
+  const saveUrlBtn = document.getElementById('saveApiBaseUrlBtn');
+  if (saveUrlBtn) {
+    saveUrlBtn.onclick = () => {
+      const input = document.getElementById('apiBaseUrlInput');
+      if (input && input.value) {
+        api.setBaseUrl(input.value.trim());
+        checkBackendHealth();
+        alert('API Base URL updated to ' + api.config.baseUrl);
+      }
+    };
+  }
+
+  const editProfile = document.getElementById('editProfileBtn');
+  if (editProfile) {
+    editProfile.onclick = () => {
+      const name = prompt('Update Profile Name:', 'Roeith R');
+      if (name) alert(`Profile updated to ${name}!`);
+    };
+  }
+}
+
+function bindChatEvents() {
+  document.querySelectorAll('[data-approve]').forEach(btn => {
+    btn.onclick = async () => {
+      const candId = btn.dataset.approve;
+      const msgIdx = parseInt(btn.dataset.msgIdx, 10);
+      const msg = chatMessages[msgIdx];
+      if (!msg || !msg.candidates) return;
+      const candidate = msg.candidates.find(c => c.candidate_id === candId);
+      if (!candidate) return;
+
+      try {
+        btn.textContent = 'Saving...';
+        btn.disabled = true;
+        await api.approveMemories({ candidates: [candidate] });
+        const box = document.getElementById('cand_' + candId);
+        if (box) {
+          box.innerHTML = `<span style="color:#168064;font-weight:bold">✓ Memory saved to SQLite Vault!</span>`;
+        }
+        await loadMemories();
+      } catch (err) {
+        alert('Failed to approve memory: ' + err.message);
+        btn.textContent = 'Approve & Save';
+        btn.disabled = false;
+      }
+    };
+  });
+
+  document.querySelectorAll('[data-reject]').forEach(btn => {
+    btn.onclick = async () => {
+      const candId = btn.dataset.reject;
+      try {
+        await api.rejectMemories({ candidateIds: [candId] });
+        const box = document.getElementById('cand_' + candId);
+        if (box) box.remove();
+      } catch (err) {
+        alert('Failed to reject candidate: ' + err.message);
+      }
+    };
+  });
+}
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+// Initial Boot
+async function init() {
+  await checkBackendHealth();
+  try {
+    const me = await api.getMe();
+    if (me) {
+      privacySettings.enableMemory = me.memory_enabled !== false;
+      privacySettings.autoCreation = me.auto_extraction !== false;
+      privacySettings.reviewBeforeSaving = me.review_before_save !== false;
+    }
+  } catch (e) {
+    console.debug('Using default user settings');
+  }
+  await loadMemories();
+}
+
+init();
+</script>
+</body>
+</html>

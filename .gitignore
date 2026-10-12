@@ -1,0 +1,47 @@
+# Python Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+
+# Local Databases & Storage
+*.db
+*.sqlite
+*.sqlite3
+data/
+backend/data/
+chroma/
+chroma_db/
+vector_store/
+
+# Logs
+*.log
+logs/
+
+# Operating System & IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local Development Helpers
+powershell.cmd
+backend/powershell.cmd
