@@ -37,14 +37,19 @@ def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 
 
+from backend.rate_limiter import rate_limiter
+
+
 @pytest.fixture(autouse=True)
 def setup_and_teardown_db():
-    """Ensure clean tables and fresh FAISS index before each test."""
+    """Ensure clean tables, fresh FAISS index, and cleared rate limits before each test."""
     Base.metadata.create_all(bind=test_engine)
     get_vector_index()._init_faiss_index()
+    rate_limiter.clear()
     yield
     Base.metadata.drop_all(bind=test_engine)
     get_vector_index()._init_faiss_index()
+    rate_limiter.clear()
 
 
 @pytest.fixture

@@ -64,6 +64,12 @@ def rate_limit_auth(request: Request) -> None:
     rate_limiter.check(f"auth:{ip}", max_requests=10, window_seconds=60)
 
 
+def rate_limit_demo(request: Request) -> None:
+    """Enforces 5 requests per minute for sandbox demo account creation to prevent resource exhaustion."""
+    ip = get_client_ip(request)
+    rate_limiter.check(f"demo:{ip}", max_requests=5, window_seconds=60)
+
+
 def rate_limit_chat(request: Request) -> None:
     """Enforces 30 requests per minute for expensive AI chat inference endpoints."""
     ip = get_client_ip(request)

@@ -4,11 +4,44 @@
  * Provides request timeouts, JSON parsing, and user-friendly error handling.
  */
 (function (global) {
+  function resolveBaseUrl() {
+    if (typeof window !== 'undefined') {
+      // 1. URL search parameter (?api=https://...) takes top precedence (overrides old localStorage)
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const queryApi = params.get('api');
+        if (queryApi && queryApi.trim()) {
+          let cleanApi = queryApi.trim().replace(/\/+$/, '');
+          if (!cleanApi.startsWith('http://') && !cleanApi.startsWith('https://')) {
+            cleanApi = 'https://' + cleanApi;
+          }
+          try {
+            localStorage.setItem('privatemind_api_url', cleanApi);
+          } catch (e) {}
+          return cleanApi;
+        }
+      } catch (e) {}
+
+      // 2. Saved user setting in localStorage
+      try {
+        const stored = localStorage.getItem('privatemind_api_url');
+        if (stored && stored.trim()) return stored.trim().replace(/\/+$/, '');
+      } catch (e) {}
+
+      // 3. Deployment configuration via window.API_BASE_URL (from config.js)
+      if (window.API_BASE_URL && window.API_BASE_URL.trim()) {
+        return window.API_BASE_URL.trim().replace(/\/+$/, '');
+      }
+    }
+    // 4. Default local development URL
+    return 'http://127.0.0.1:8000';
+  }
+
   const API_CONFIG = {
-    // Single centralized development setting for backend API URL
-    baseUrl: (typeof window !== 'undefined' && window.API_BASE_URL) || 'http://127.0.0.1:8000',
+    // Configurable backend API URL (supports window.API_BASE_URL, localStorage, or query param)
+    baseUrl: resolveBaseUrl(),
     timeoutMs: 12000,
-    userId: 'default_user',
+    userId: (typeof localStorage !== 'undefined' && localStorage.getItem('privatemind_user_id')) || '',
     token: typeof localStorage !== 'undefined' ? localStorage.getItem('privatemind_token') || '' : '',
   };
 
@@ -60,6 +93,7 @@
         const err = new Error(typeof errorDetail === 'object' ? JSON.stringify(errorDetail) : errorDetail);
         err.status = response.status;
         err.data = data;
+        err.isAuthError = (response.status === 401);
         throw err;
       }
 
@@ -83,12 +117,14 @@
   const api = {
     config: API_CONFIG,
 
-    setBaseUrl(url) {
-      API_CONFIG.baseUrl = url.replace(/\/+$/, '');
-    },
-
     setUserId(id) {
-      API_CONFIG.userId = id;
+      API_CONFIG.userId = id || 'default_user';
+      if (typeof localStorage !== 'undefined') {
+        try {
+          if (id) localStorage.setItem('privatemind_user_id', id);
+          else localStorage.removeItem('privatemind_user_id');
+        } catch (e) {}
+      }
     },
 
     /**
@@ -475,6 +511,20 @@
     },
 
     /**
+     * Create an isolated private sandbox demo session on the backend
+     */
+    async createDemoSession() {
+      const res = await request('/auth/demo-session', { method: 'POST' });
+      if (res && res.access_token) {
+        api.setToken(res.access_token);
+        if (res.user && res.user.username) {
+          api.setUserId(res.user.username);
+        }
+      }
+      return res;
+    },
+
+    /**
      * Log out current session
      */
     async logout() {
@@ -482,6 +532,7 @@
         await request('/auth/logout', { method: 'POST' });
       } finally {
         api.setToken('');
+        api.setUserId('');
       }
     },
 
@@ -542,6 +593,25 @@
      */
     async deleteAllChatHistory() {
       return request('/chat', { method: 'DELETE' });
+    },
+
+    /**
+     * Updates the base API URL dynamically and persists to localStorage.
+     * When switching backend endpoints, safely clears stale session tokens.
+     */
+    setBaseUrl(newUrl) {
+      if (!newUrl) return;
+      const clean = newUrl.trim().replace(/\/+$/, '');
+      const oldUrl = API_CONFIG.baseUrl;
+      API_CONFIG.baseUrl = clean;
+      if (typeof localStorage !== 'undefined') {
+        try {
+          localStorage.setItem('privatemind_api_url', clean);
+        } catch (e) {}
+      }
+      if (oldUrl && clean && oldUrl !== clean) {
+        api.setToken('');
+      }
     },
   };
 

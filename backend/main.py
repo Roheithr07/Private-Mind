@@ -1,5 +1,6 @@
 import json
 import os
+import secrets
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -26,7 +27,7 @@ try:
         get_current_user_optional,
         get_token_from_request,
     )
-    from .rate_limiter import rate_limit_auth, rate_limit_chat
+    from .rate_limiter import rate_limit_auth, rate_limit_chat, rate_limit_demo
     from .llm_provider import (
         get_llm_provider,
         LLMConfigurationError,
@@ -105,7 +106,7 @@ except ImportError:
         get_current_user_optional,
         get_token_from_request,
     )
-    from rate_limiter import rate_limit_auth, rate_limit_chat
+    from rate_limiter import rate_limit_auth, rate_limit_chat, rate_limit_demo
     from llm_provider import (
         get_llm_provider,
         LLMConfigurationError,
@@ -178,6 +179,22 @@ async def lifespan(app: FastAPI):
     # Initialize and synchronize FAISS vector index with database
     db = SessionLocal()
     try:
+        # In non-production environments only, seed default user for local testing and development
+        env_name = os.getenv("ENVIRONMENT", "development").strip().lower()
+        if env_name != "production":
+            dev_user = db.query(User).filter(User.username == "default_user").first()
+            if not dev_user:
+                dev_user = User(
+                    username="default_user",
+                    email="developer@privatemind.local",
+                    password_hash=hash_password("DevPassword123!"),
+                    is_active=True,
+                    memory_enabled=True,
+                    auto_extraction=True,
+                    review_before_save=True,
+                )
+                db.add(dev_user)
+                db.commit()
         get_vector_index().load_or_sync_from_db(db)
     finally:
         db.close()
@@ -193,7 +210,7 @@ app = FastAPI(
 
 is_prod = os.getenv("ENVIRONMENT", "development").strip().lower() == "production"
 allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "")
-configured_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
+configured_origins = [o.strip().rstrip('/') for o in allowed_origins_env.split(",") if o.strip()]
 
 if not is_prod:
     for default_orig in [
@@ -207,9 +224,15 @@ if not is_prod:
         if default_orig not in configured_origins:
             configured_origins.append(default_orig)
 
+# Prioritize explicitly configured origins; only fall back to Render regex if no specific origins set
+origin_regex = os.getenv("ALLOWED_ORIGIN_REGEX")
+if not origin_regex and not configured_origins and os.getenv("RENDER"):
+    origin_regex = r"https:\/\/.*\.onrender\.com"
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=configured_origins,
+    allow_origin_regex=origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -296,27 +319,45 @@ def set_auth_cookie(response: Response, token: str):
 def resolve_effective_user(requested_user_id: Optional[str], current_user: User) -> str:
     """
     Ensures that a user can only access their own resources and prevents IDOR.
-    If requested_user_id differs from current_user.username, rejects with 403 Forbidden.
-    Exception: In non-production environments when current_user is default_user and no session token
-    was provided, permits test cases that explicitly specify a test user_id.
+    If requested_user_id is not specified or matches current_user.username, returns current_user.username.
+    If requested_user_id differs from current_user.username:
+      - In production, rejects with 403 Forbidden unconditionally (no user or account bypass).
+      - In development/test environments, permits explicit test user_ids only when the caller is unauthenticated
+        fallback default_user. Any authenticated user requesting default_user or another user_id is rejected with 403.
     """
-    if not requested_user_id or requested_user_id == current_user.username or requested_user_id == "default_user":
+    if not requested_user_id or requested_user_id == current_user.username:
         return current_user.username
-    if current_user.username != "default_user":
+
+    env = os.getenv("ENVIRONMENT", "development").strip().lower()
+    if env == "production":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Forbidden: You do not have permission to access resources belonging to user '{requested_user_id}'.",
         )
-    return requested_user_id
+
+    # In development/testing, only allow unauthenticated fallback default_user to specify test user_ids
+    if current_user.username == "default_user":
+        return requested_user_id
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=f"Forbidden: You do not have permission to access resources belonging to user '{requested_user_id}'.",
+    )
 
 
 def get_user_memory_or_404(memory_id: int, current_user: User, db: Session) -> Memory:
     """
     Queries memory by ID and ensures ownership check to prevent Insecure Direct Object References (IDOR).
+    In production: every user (including default_user) must strictly access only their own memories.
+    In development/testing: unauthenticated fallback default_user can access test memories created across test fixtures.
+    Any authenticated user (whose username is not default_user) is always strictly restricted to their own memories.
     """
     query = db.query(Memory).filter(Memory.id == memory_id)
-    if current_user.username != "default_user":
+    env = os.getenv("ENVIRONMENT", "development").strip().lower()
+
+    if env == "production" or current_user.username != "default_user":
         query = query.filter(Memory.user_id == current_user.username)
+
     memory = query.first()
     if not memory:
         raise HTTPException(
@@ -324,6 +365,8 @@ def get_user_memory_or_404(memory_id: int, current_user: User, db: Session) -> M
             detail=f"Memory with ID {memory_id} not found",
         )
     return memory
+
+
 
 
 # -----------------------------------------------------------------------------
@@ -410,6 +453,92 @@ def login(
         access_token=token,
         token_type="bearer",
         user=UserResponse.model_validate(user),
+    )
+
+
+@app.post(
+    "/auth/demo-session",
+    response_model=AuthTokenResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Authentication"],
+    summary="Create an isolated sandbox demo user session for safe public evaluation",
+)
+def create_demo_session(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    rate_limit_demo(request)
+
+    # Generate a unique isolated guest user ID and cryptographically random password
+    demo_suffix = secrets.token_hex(4)
+    demo_username = f"demo_guest_{demo_suffix}"
+    random_password = secrets.token_urlsafe(24)
+
+    demo_user = User(
+        username=demo_username,
+        email=f"{demo_username}@demo.privatemind.ai",
+        password_hash=hash_password(random_password),
+        is_active=True,
+        memory_enabled=True,
+        auto_extraction=True,
+        review_before_save=True,
+    )
+    db.add(demo_user)
+    db.commit()
+    db.refresh(demo_user)
+
+    # Seed isolated sample memories for this specific demo user sandbox
+    demo_seed = [
+        Memory(
+            user_id=demo_username,
+            title="Current Focus: Nemotron Optimization",
+            content="I am fine-tuning inference prompts for NVIDIA Nemotron-3_5-Lightning via Nebius Token Factory for low-latency memory synthesis.",
+            category="Projects",
+            source="demo_seed",
+        ),
+        Memory(
+            user_id=demo_username,
+            title="Dietary Preference: Vegetarian",
+            content="I follow a strict vegetarian diet, prefer high-protein plant meals like lentils and tofu, and avoid seafood or eggs.",
+            category="Preferences",
+            source="demo_seed",
+        ),
+        Memory(
+            user_id=demo_username,
+            title="Skill Profile: AI Engineering & Python",
+            content="Experienced with FastAPI, SQLite, FAISS vector indexing, and asynchronous LLM orchestration with NVIDIA models.",
+            category="Skills",
+            source="demo_seed",
+        ),
+    ]
+    for mem in demo_seed:
+        db.add(mem)
+    db.commit()
+
+    # Index embeddings for the demo user
+    try:
+        vector_index = get_vector_index()
+        for mem in demo_seed:
+            db.refresh(mem)
+            vector_index.add_or_update_memory(
+                memory_id=mem.id,
+                title=mem.title,
+                content=mem.content,
+                category=mem.category,
+                user_id=demo_username,
+                db=db,
+            )
+    except Exception:
+        pass
+
+    token, _ = create_session(demo_user.username, db)
+    set_auth_cookie(response, token)
+
+    return AuthTokenResponse(
+        access_token=token,
+        token_type="bearer",
+        user=UserResponse.model_validate(demo_user),
     )
 
 
@@ -2502,4 +2631,8 @@ def ask_ai_about_project(
     )
 
 
-
+if __name__ == "__main__":
+    import uvicorn
+    host = os.getenv("BACKEND_HOST", "0.0.0.0" if os.getenv("RENDER") else "127.0.0.1")
+    port = int(os.getenv("PORT", os.getenv("BACKEND_PORT", "8000")))
+    uvicorn.run("main:app", host=host, port=port, reload=False)

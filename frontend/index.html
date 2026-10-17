@@ -1798,8 +1798,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 </style>
 </head>
 <body>
-<div class="app"><div class="sidebar-overlay" id="sidebarOverlay"></div><aside class="sidebar" id="sidebar"><div class="brand"><div class="logo"><svg width="22" height="22"><use href="#brain"/></svg></div><div><b>PrivateMind</b><small>Your AI, your memory.</small></div></div><nav class="nav"><button data-page="workspace" class="active">⌂ <span>AI Workspace</span></button><button data-page="memories">▣ <span>Memory Vault</span></button><button data-page="projects">□ <span>Projects &amp; Context</span></button><button data-page="privacy">♢ <span>Privacy Center</span></button><button data-page="settings">⚙ <span>Settings</span></button></nav><div class="profile-wrap"><div class="profile"><div class="avatar">R</div><div><b>Roeith R</b><small>Student · CSE</small></div><button class="icon">⚙</button></div><p class="note" id="backendStatus">● Connecting to API...</p></div></aside><div class="main"><header class="top"><button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation">☰</button><div class="heading"><div class="heading-icon"><svg width="18" height="18"><use href="#sparkle"/></svg></div><div><h1 id="title">AI Workspace</h1><p id="subtitle">An AI that remembers what matters.</p></div></div><div class="tools"><div class="search">⌕ <span>Search conversations...</span></div><button class="icon">♧</button><button class="icon">?</button></div></header><div id="view"></div></div></div><svg style="display:none"><symbol id="brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4.5A3 3 0 0 0 4 7a3 3 0 0 0 .3 5.8A3.1 3.1 0 0 0 6 18.7a3 3 0 0 0 5-2.2V5.8a3 3 0 0 0-2-1.3ZM15 4.5A3 3 0 0 1 20 7a3 3 0 0 1-.3 5.8 3.1 3.1 0 0 1-1.7 5.9 3 3 0 0 1-5-2.2V5.8a3 3 0 0 1 2-1.3Z"/><path d="M6.5 8.5h2M15.5 8.5h2M6.5 14h2M15.5 14h2M12 6v12"/></symbol><symbol id="sparkle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3ZM19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></symbol></svg>
+<div class="app"><div class="sidebar-overlay" id="sidebarOverlay"></div><aside class="sidebar" id="sidebar"><div class="brand"><div class="logo"><svg width="22" height="22"><use href="#brain"/></svg></div><div><b>PrivateMind</b><small>Your AI, your memory.</small></div></div><nav class="nav"><button data-page="workspace" class="active">⌂ <span>AI Workspace</span></button><button data-page="memories">▣ <span>Memory Vault</span></button><button data-page="projects">□ <span>Projects &amp; Context</span></button><button data-page="privacy">♢ <span>Privacy Center</span></button><button data-page="settings">⚙ <span>Settings</span></button></nav><div class="profile-wrap"><div class="profile" id="sidebarProfileBtn" style="cursor:pointer" title="Click to manage account / sign in"><div class="avatar" id="sidebarAvatar">R</div><div><b id="profileName">Roeith R</b><small id="profileSubtitle">Signed In</small></div><button class="icon" id="profileAuthBtn" title="Account / Sign In">⚙</button></div><p class="note" id="backendStatus">● Connecting to API...</p></div></aside><div class="main"><header class="top"><button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation">☰</button><div class="heading"><div class="heading-icon"><svg width="18" height="18"><use href="#sparkle"/></svg></div><div><h1 id="title">AI Workspace</h1><p id="subtitle">An AI that remembers what matters.</p></div></div><div class="tools"><div class="search">⌕ <span>Search conversations...</span></div><button class="icon">♧</button><button class="icon">?</button></div></header><div id="view"></div></div></div><svg style="display:none"><symbol id="brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4.5A3 3 0 0 0 4 7a3 3 0 0 0 .3 5.8A3.1 3.1 0 0 0 6 18.7a3 3 0 0 0 5-2.2V5.8a3 3 0 0 0-2-1.3ZM15 4.5A3 3 0 0 1 20 7a3 3 0 0 1-.3 5.8 3.1 3.1 0 0 1-1.7 5.9 3 3 0 0 1-5-2.2V5.8a3 3 0 0 1 2-1.3Z"/><path d="M6.5 8.5h2M15.5 8.5h2M6.5 14h2M15.5 14h2M12 6v12"/></symbol><symbol id="sparkle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3ZM19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></symbol></svg>
 <div id="modalContainer"></div>
+<script src="config.js"></script>
 <script src="api.js"></script>
 <script>
 // --- State & Variables ---
@@ -1905,25 +1906,28 @@ function setPage(next) {
 
 async function checkBackendHealth() {
   const statusEl = document.getElementById('backendStatus');
+  const hostLabel = (api && api.config && api.config.baseUrl)
+    ? api.config.baseUrl.replace(/^https?:\/\//, '')
+    : 'Local';
   try {
     const res = await api.checkHealth();
     if (res.online) {
       isBackendOnline = true;
       if (statusEl) {
-        statusEl.innerHTML = '● Backend Connected (127.0.0.1:8000)';
+        statusEl.innerHTML = `● Backend Connected (${escapeHtml(hostLabel)})`;
         statusEl.style.color = '#059669';
       }
     } else {
       isBackendOnline = false;
       if (statusEl) {
-        statusEl.innerHTML = '○ Backend Offline (Check 8000)';
+        statusEl.innerHTML = `○ Backend Offline (${escapeHtml(hostLabel)})`;
         statusEl.style.color = '#dc2626';
       }
     }
   } catch (err) {
     isBackendOnline = false;
     if (statusEl) {
-      statusEl.innerHTML = '○ Backend Offline (Check 8000)';
+      statusEl.innerHTML = `○ Backend Offline (${escapeHtml(hostLabel)})`;
       statusEl.style.color = '#dc2626';
     }
   }
@@ -2223,9 +2227,14 @@ async function send(text) {
       loading: false
     };
   } catch (err) {
+    if (err.status === 401 || (err.message && err.message.includes('Authentication required'))) {
+      if (typeof showAuthModal === 'function') {
+        showAuthModal('Authentication required to access memory and chat. Please sign in or use Demo Sign In.');
+      }
+    }
     chatMessages[loadingIndex] = {
       role: 'assistant',
-      text: `Unable to complete chat request: ${err.message}. Backend running at http://127.0.0.1:8000?`,
+      text: `Unable to complete chat request: ${err.message}. (Backend: ${api.config.baseUrl})`,
       isError: true,
       loading: false
     };
@@ -2916,21 +2925,29 @@ function settings() {
       <p>Configure developer options, inference settings, and UI preferences.</p>
     </div>
     <section class="card" style="max-width:690px;margin-bottom:15px">
-      <p class="eyebrow">Profile</p>
-      <p class="card-desc">Details shown across your workspace.</p>
+      <p class="eyebrow">Profile &amp; Authentication</p>
+      <p class="card-desc">Details shown across your workspace and authentication status.</p>
       <div class="profile-edit">
-        <div class="avatar" style="width:42px;height:42px;font-size:15px">R</div>
-        <div><b>Roeith R</b><small>roeith@example.com</small></div>
-        <button class="secondary" id="editProfileBtn">✎ Edit profile</button>
+        <div class="avatar" style="width:42px;height:42px;font-size:15px">${(api.config.userId || 'R')[0].toUpperCase()}</div>
+        <div style="flex:1">
+          <b>${escapeHtml(api.config.userId || 'Roeith R')}</b>
+          <small style="display:block;color:var(--muted)">${api.config.token ? '● Authenticated Session' : '○ Demo Account (No Password Required)'}</small>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="primary" id="openAuthModalBtn">${api.config.token ? 'Switch Account' : 'Sign In / Register'}</button>
+          ${api.config.token ? '<button class="secondary" id="logoutBtn">Log Out</button>' : ''}
+          <button class="secondary" id="editProfileBtn">✎ Edit name</button>
+        </div>
       </div>
     </section>
     <section class="card" style="max-width:690px;margin-bottom:15px">
       <p class="eyebrow">Backend Connection</p>
       <p class="card-desc">Configure the FastAPI endpoint for PrivateMind.</p>
       <div style="display:flex;gap:10px;margin-top:10px">
-        <input id="apiBaseUrlInput" value="${api.config.baseUrl}" style="flex:1;height:44px;padding:0 14px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;color:var(--navy)">
+        <input id="apiBaseUrlInput" value="${escapeHtml(api.config.baseUrl)}" style="flex:1;height:44px;padding:0 14px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;color:var(--navy)">
         <button class="primary" id="saveApiBaseUrlBtn" style="height:44px;padding:0 18px;font-size:15px">Save URL</button>
       </div>
+      <p id="apiSaveSuccess" style="display:none;color:#059669;font-size:13px;font-weight:600;margin-top:8px"></p>
     </section>
     <section class="card" style="max-width:690px">
       <p class="eyebrow">Appearance</p>
@@ -2943,6 +2960,140 @@ function settings() {
 }
 
 // --- Modals ---
+function showAuthModal(promptMessage = '') {
+  const container = document.getElementById('modalContainer');
+  let authMode = 'login';
+
+  function renderAuthModal() {
+    container.innerHTML = `
+      <div class="modal" id="authModal">
+        <form id="authModalForm" style="max-width:440px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h2 style="margin:0;font-size:20px">${authMode === 'login' ? 'Sign In to PrivateMind' : 'Create an Account'}</h2>
+            <button type="button" id="closeAuthModal" style="border:0;background:transparent;font-size:20px;color:var(--muted);cursor:pointer">✕</button>
+          </div>
+          <p style="color:var(--muted);font-size:13px;margin:0 0 16px;line-height:1.5">
+            ${escapeHtml(promptMessage || 'Authenticate to connect securely with your private memory vault and chat assistant.')}
+          </p>
+
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px;margin-bottom:16px">
+            <b style="color:#1e40af;font-size:13px;display:block;margin-bottom:3px">⚡ 1-Click Private Demo Sandbox</b>
+            <span style="color:#3b82f6;font-size:12px;display:block;margin-bottom:10px">Instantly launches a private sandbox session isolated to you, pre-loaded with sample memories.</span>
+            <button type="button" class="primary" id="demoSignInBtn" style="width:100%;height:38px;font-size:13px">⚡ Launch Private Demo</button>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-bottom:14px;border-bottom:1px solid #edf2f6;padding-bottom:8px">
+            <button type="button" id="tabLogin" class="link" style="font-weight:${authMode === 'login' ? '700' : '400'};color:${authMode === 'login' ? 'var(--blue)' : 'var(--muted)'}">Existing Account</button>
+            <span style="color:#cbd5e1">|</span>
+            <button type="button" id="tabRegister" class="link" style="font-weight:${authMode === 'register' ? '700' : '400'};color:${authMode === 'register' ? 'var(--blue)' : 'var(--muted)'}">Register New User</button>
+          </div>
+
+          <div id="authModalErr" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
+          <div id="authModalSuccess" style="display:none;background:#ecfdf5;border:1px solid #a7f3d0;color:#059669;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
+
+          <label>Username</label>
+          <input id="authUsernameInput" placeholder="e.g. roeith" required autocomplete="username">
+
+          <label>Password</label>
+          <input id="authPasswordInput" type="password" placeholder="At least 8 characters" required autocomplete="current-password">
+
+          ${authMode === 'register' ? `
+            <label>Email (Optional)</label>
+            <input id="authEmailInput" type="email" placeholder="you@example.com" autocomplete="email">
+          ` : ''}
+
+          <div class="modal-actions" style="margin-top:18px">
+            <button type="button" class="secondary" id="cancelAuthModal">Cancel</button>
+            <button type="submit" class="primary" id="submitAuthModalBtn">${authMode === 'login' ? 'Sign In' : 'Create Account'}</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    const closeBtn = document.getElementById('closeAuthModal');
+    if (closeBtn) closeBtn.onclick = () => { container.innerHTML = ''; };
+    const cancelBtn = document.getElementById('cancelAuthModal');
+    if (cancelBtn) cancelBtn.onclick = () => { container.innerHTML = ''; };
+
+    const tabLogin = document.getElementById('tabLogin');
+    if (tabLogin) tabLogin.onclick = () => {
+      authMode = 'login';
+      renderAuthModal();
+    };
+    const tabRegister = document.getElementById('tabRegister');
+    if (tabRegister) tabRegister.onclick = () => {
+      authMode = 'register';
+      renderAuthModal();
+    };
+
+    const errBox = document.getElementById('authModalErr');
+
+    // 1-Click Isolated Demo Sandbox
+    const demoBtn = document.getElementById('demoSignInBtn');
+    if (demoBtn) {
+      demoBtn.onclick = async () => {
+        demoBtn.disabled = true;
+        demoBtn.textContent = 'Launching private sandbox...';
+        try {
+          await api.createDemoSession();
+          container.innerHTML = '';
+          render();
+          await checkBackendHealth();
+          await loadMemories(true);
+        } catch (err) {
+          demoBtn.disabled = false;
+          demoBtn.textContent = '⚡ Launch Private Demo';
+          if (errBox) {
+            errBox.textContent = `Demo session creation failed: ${err.message}`;
+            errBox.style.display = 'block';
+          }
+        }
+      };
+    }
+
+    // Form submit (manual login or register)
+    const form = document.getElementById('authModalForm');
+    if (form) {
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('authUsernameInput').value.trim();
+        const password = document.getElementById('authPasswordInput').value;
+        const email = document.getElementById('authEmailInput') ? document.getElementById('authEmailInput').value.trim() : null;
+
+        if (!username || !password) return;
+        const subBtn = document.getElementById('submitAuthModalBtn');
+        if (subBtn) {
+          subBtn.disabled = true;
+          subBtn.textContent = authMode === 'login' ? 'Signing in...' : 'Registering...';
+        }
+
+        try {
+          if (authMode === 'login') {
+            await api.login({ username, password });
+          } else {
+            await api.register({ username, password, email: email || null });
+          }
+          container.innerHTML = '';
+          render();
+          await checkBackendHealth();
+          await loadMemories(true);
+        } catch (err) {
+          if (subBtn) {
+            subBtn.disabled = false;
+            subBtn.textContent = authMode === 'login' ? 'Sign In' : 'Create Account';
+          }
+          if (errBox) {
+            errBox.textContent = err.message || 'Authentication failed.';
+            errBox.style.display = 'block';
+          }
+        }
+      };
+    }
+  }
+
+  renderAuthModal();
+}
+
 function showAddMemoryModal() {
   const container = document.getElementById('modalContainer');
   container.innerHTML = `
@@ -3133,7 +3284,7 @@ function showNewProjectModal() {
         submitBtn.textContent = 'Create Project';
       }
       const errMsg = err.isNetworkError
-        ? `Connection Error: Cannot connect to PrivateMind backend at ${api.config.baseUrl}. Ensure FastAPI is running on port 8000.`
+        ? `Connection Error: Cannot connect to PrivateMind backend at ${api.config.baseUrl}. Check backend connectivity.`
         : err.status
         ? `Server Error (${err.status}): ${err.message}`
         : `Error creating project: ${err.message}`;
@@ -3497,6 +3648,12 @@ function render() {
       page === 'projects' ? projects() :
       page === 'privacy' ? privacy() : settings();
     bind();
+    const pName = document.getElementById('profileName');
+    const pSub = document.getElementById('profileSubtitle');
+    const pAv = document.getElementById('sidebarAvatar');
+    if (pName) pName.textContent = api.config.userId || 'Roeith R';
+    if (pSub) pSub.textContent = api.config.token ? 'Active Session' : 'Demo Account';
+    if (pAv) pAv.textContent = (api.config.userId || 'R')[0].toUpperCase();
   } catch (err) {
     console.error('Rendering error in page ' + page + ':', err);
     viewEl.innerHTML = `
@@ -3895,9 +4052,14 @@ function bind() {
           loading: false
         };
       } catch (err) {
+        if (err.status === 401 || (err.message && err.message.includes('Authentication required'))) {
+          if (typeof showAuthModal === 'function') {
+            showAuthModal('Authentication required for project AI. Please sign in or use Demo Sign In.');
+          }
+        }
         projectAiChatMessages[loadingIdx] = {
           role: 'assistant',
-          text: 'Failed to complete project AI request: ' + err.message,
+          text: 'Failed to complete project AI request: ' + err.message + ` (Backend: ${api.config.baseUrl})`,
           isError: true,
           loading: false
         };
@@ -3989,12 +4151,28 @@ function bind() {
   // Settings
   const saveUrlBtn = document.getElementById('saveApiBaseUrlBtn');
   if (saveUrlBtn) {
-    saveUrlBtn.onclick = () => {
+    saveUrlBtn.onclick = async () => {
       const input = document.getElementById('apiBaseUrlInput');
       if (input && input.value) {
-        api.setBaseUrl(input.value.trim());
-        checkBackendHealth();
-        alert('API Base URL updated to ' + api.config.baseUrl);
+        let val = input.value.trim();
+        if (val && !val.startsWith('http://') && !val.startsWith('https://')) {
+          val = 'https://' + val;
+          input.value = val;
+        }
+        api.setBaseUrl(val);
+        const statusEl = document.getElementById('backendStatus');
+        const hostLabel = api.config.baseUrl.replace(/^https?:\/\//, '');
+        if (statusEl) {
+          statusEl.innerHTML = `● Connecting to ${escapeHtml(hostLabel)}...`;
+          statusEl.style.color = '#475569';
+        }
+        await checkBackendHealth();
+        await loadMemories(true);
+        const successMsg = document.getElementById('apiSaveSuccess');
+        if (successMsg) {
+          successMsg.style.display = 'block';
+          successMsg.textContent = `✓ Backend URL updated to ${api.config.baseUrl}`;
+        }
       }
     };
   }
@@ -4002,8 +4180,40 @@ function bind() {
   const editProfile = document.getElementById('editProfileBtn');
   if (editProfile) {
     editProfile.onclick = () => {
-      const name = prompt('Update Profile Name:', 'Roeith R');
-      if (name) alert(`Profile updated to ${name}!`);
+      const name = prompt('Update Profile Name:', api.config.userId || 'Roeith R');
+      if (name && name.trim()) {
+        api.setUserId(name.trim());
+        render();
+        alert(`Profile updated to ${name.trim()}!`);
+      }
+    };
+  }
+
+  const openAuth = document.getElementById('openAuthModalBtn');
+  if (openAuth) {
+    openAuth.onclick = () => showAuthModal();
+  }
+
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      await api.logout();
+      render();
+      await checkBackendHealth();
+      await loadMemories(true);
+    };
+  }
+
+  const sidebarProfile = document.getElementById('sidebarProfileBtn');
+  if (sidebarProfile) {
+    sidebarProfile.onclick = () => showAuthModal();
+  }
+
+  const profileAuthBtn = document.getElementById('profileAuthBtn');
+  if (profileAuthBtn) {
+    profileAuthBtn.onclick = (e) => {
+      e.stopPropagation();
+      showAuthModal();
     };
   }
 }
@@ -4156,17 +4366,31 @@ async function init() {
   // 2. Perform initial backend health check
   await checkBackendHealth();
 
-  // 3. If backend is reachable, load user settings
+  // 3. If backend is reachable, load user settings or prompt for authentication
+  let isAuthenticated = false;
   if (isBackendOnline) {
     try {
       const me = await api.getMe();
       if (me) {
+        isAuthenticated = true;
+        if (me.username) {
+          api.setUserId(me.username);
+        }
         privacySettings.enableMemory = me.memory_enabled !== false;
         privacySettings.autoCreation = me.auto_extraction !== false;
         privacySettings.reviewBeforeSaving = me.review_before_save !== false;
+        render();
       }
     } catch (e) {
-      console.debug('Using default user settings');
+      console.debug('No active session or auth required');
+    }
+
+    const isProduction = typeof window !== 'undefined' &&
+      (window.location.hostname.includes('onrender.com') || (api.config.baseUrl && api.config.baseUrl.includes('onrender.com')));
+
+    // In production without an active token, prompt user to sign in or use 1-click demo sign in
+    if (isProduction && !isAuthenticated && !api.config.token) {
+      showAuthModal('Welcome to PrivateMind on Render! Please sign in or use 1-Click Demo Sign In to access your memory vault.');
     }
   }
 

@@ -8,7 +8,7 @@ class MemoryBase(BaseModel):
     content: str = Field(..., min_length=1, description="Content or details of the memory", examples=["Building PrivateMind privacy-first assistant"])
     category: str = Field(default="General", max_length=100, description="Memory category", examples=["Projects"])
     source: Optional[str] = Field(default="manual", max_length=255, description="Source of the memory", examples=["manual"])
-    user_id: Optional[str] = Field(default="default_user", max_length=100, description="Owner or user identifier", examples=["default_user"])
+    user_id: Optional[str] = Field(default=None, max_length=100, description="Owner or user identifier", examples=["default_user"])
 
 
 class MemoryCreate(MemoryBase):
@@ -67,7 +67,7 @@ class CandidateMemory(BaseModel):
 class ExtractionRequest(BaseModel):
     """Request payload for extracting candidate memories from a user message."""
     message: str = Field(..., min_length=1, description="The message from which to extract memories", examples=["I'm learning Python and building a water quality monitoring project using ESP32."])
-    user_id: Optional[str] = Field(default="default_user", description="User identifier")
+    user_id: Optional[str] = Field(default=None, description="User identifier")
     review_before_saving: bool = Field(default=True, description="If True, returns candidates for preview. If False, auto-saves non-duplicate facts.")
 
 
@@ -88,14 +88,14 @@ class CandidateApprovalItem(BaseModel):
     category: str = Field(default="General")
     action: Optional[str] = Field(default="create", description="Action to perform: create, update, skip")
     existing_memory_id: Optional[int] = None
-    user_id: Optional[str] = Field(default="default_user")
+    user_id: Optional[str] = Field(default=None)
     source: Optional[str] = Field(default="conversation_extraction")
 
 
 class ApproveMemoriesRequest(BaseModel):
     """Request payload to approve and save or update candidate memories."""
     candidates: List[CandidateApprovalItem]
-    user_id: Optional[str] = Field(default="default_user")
+    user_id: Optional[str] = Field(default=None)
 
 
 class ApproveMemoriesResponse(BaseModel):
@@ -126,7 +126,7 @@ class RejectMemoriesResponse(BaseModel):
 class MemorySearchRequest(BaseModel):
     """Request payload for semantic retrieval of relevant memories."""
     query: str = Field(..., min_length=1, description="User question or statement", examples=["Which hardware am I using for my water monitoring project?"])
-    user_id: Optional[str] = Field(default="default_user", description="User identifier")
+    user_id: Optional[str] = Field(default=None, description="User identifier")
     threshold: float = Field(default=0.3, ge=0.0, le=1.0, description="Minimum cosine similarity score required (0.0 to 1.0)")
     limit: int = Field(default=5, ge=1, le=50, description="Maximum number of relevant memories to retrieve")
     category: Optional[str] = Field(default=None, description="Optional category filter")
@@ -172,7 +172,7 @@ class ChatMessageRequest(BaseModel):
     """Request payload for conversational chat with memory-augmented context."""
     message: str = Field(..., min_length=1, max_length=4000, description="User input message or question")
     conversation_id: Optional[str] = Field(default=None, description="Optional conversation session ID (auto-generated if omitted)")
-    user_id: Optional[str] = Field(default="default_user", description="User identifier")
+    user_id: Optional[str] = Field(default=None, description="User identifier")
     retrieval_threshold: float = Field(default=0.25, ge=0.0, le=1.0, description="Similarity threshold for memory retrieval")
     max_memories: int = Field(default=5, ge=0, le=20, description="Maximum number of memories to include in context")
 
@@ -251,7 +251,7 @@ class ProjectCreate(BaseModel):
     priority: Optional[str] = Field(default="medium", description="Project priority: low, medium, high, urgent")
     deadline: Optional[str] = Field(default=None, description="Optional deadline date string")
     progress: Optional[int] = Field(default=0, ge=0, le=100, description="Project progress percentage")
-    user_id: Optional[str] = Field(default="default_user", description="User identifier")
+    user_id: Optional[str] = Field(default=None, description="User identifier")
     tags: Optional[List[str]] = Field(default_factory=list, description="Project tags")
     theme: Optional[str] = Field(default="blue", description="Theme color")
 
@@ -345,7 +345,7 @@ class ProjectChatRequest(BaseModel):
     message: Optional[str] = Field(default=None, max_length=4000, description="Question about this project")
     query: Optional[str] = Field(default=None, max_length=4000, description="Alternative alias for question")
     conversation_id: Optional[str] = Field(default=None, description="Optional conversation session ID")
-    user_id: Optional[str] = Field(default="default_user", description="User identifier")
+    user_id: Optional[str] = Field(default=None, description="User identifier")
 
 
 class BulkDeleteResponse(BaseModel):
