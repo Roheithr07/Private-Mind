@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -195,7 +196,14 @@ allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "")
 configured_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
 
 if not is_prod:
-    for default_orig in ["http://localhost:5500", "http://127.0.0.1:5500"]:
+    for default_orig in [
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]:
         if default_orig not in configured_origins:
             configured_origins.append(default_orig)
 
@@ -206,6 +214,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Ensure unexpected internal errors return CORS-compliant JSON instead of crashing the connection."""
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal server error: {str(exc)}"},
+    )
 
 
 @app.get("/", tags=["System"])
@@ -830,11 +847,24 @@ def approve_memories(
                 vector_mgr.index_memory(existing.id, existing.user_id, f"{existing.title} {existing.content}", db)
                 continue
 
+        clean_title = cand.title.strip()
+        clean_content = cand.content.strip()
+
+        # Handle duplicate submissions by returning existing memory
+        existing_duplicate = db.query(Memory).filter(
+            Memory.user_id == user_id,
+            Memory.title == clean_title,
+            Memory.content == clean_content,
+        ).first()
+        if existing_duplicate:
+            saved.append(existing_duplicate)
+            continue
+
         # Create new memory
         new_memory = Memory(
             user_id=user_id,
-            title=cand.title.strip(),
-            content=cand.content.strip(),
+            title=clean_title,
+            content=clean_content,
             category=cand.category.strip() if cand.category else "General",
             source=cand.source or "conversation_extraction",
         )

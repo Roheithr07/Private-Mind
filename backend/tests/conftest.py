@@ -1,6 +1,9 @@
+import os
 from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
+
+os.environ["LLM_PROVIDER"] = "mock"
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool

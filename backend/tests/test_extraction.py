@@ -240,3 +240,51 @@ def test_auto_save_mode(client):
     db_mems = client.get("/memories?user_id=test_user_autosave").json()
     assert len(db_mems) == 1
     assert "Python" in db_mems[0]["title"]
+
+
+def test_ordinary_questions_never_extracted(client):
+    """Verify ordinary questions and memory lookups produce zero candidate memories."""
+    questions = [
+        "What hardware components am I using for my water monitoring project?",
+        "How can I learn AWS?",
+        "Can you tell me what my diet preferences are?",
+        "Do I have any saved notes on ESP32?",
+        "What do you remember about my projects?",
+        "Where did I say I live?",
+        "Why is the backend not connecting?",
+    ]
+    for q in questions:
+        res = client.post("/memories/extract", json={"message": q, "user_id": "test_user_q"})
+        assert res.status_code == 200
+        assert len(res.json()["candidates"]) == 0, f"Question '{q}' should produce zero candidates"
+
+
+def test_imperative_requests_never_extracted(client):
+    """Verify prompt requests and imperative commands produce zero candidate memories."""
+    requests = [
+        "Help me plan my next project",
+        "Summarize my skills",
+        "Please write a Python script for testing.",
+        "List all my saved notes.",
+        "Explain how the vector index works.",
+        "Recommend some good recipes.",
+    ]
+    for r in requests:
+        res = client.post("/memories/extract", json={"message": r, "user_id": "test_user_req"})
+        assert res.status_code == 200
+        assert len(res.json()["candidates"]) == 0, f"Request '{r}' should produce zero candidates"
+
+
+def test_assistant_responses_never_extracted(client):
+    """Verify assistant responses and AI boilerplate produce zero candidate memories."""
+    assistant_texts = [
+        "Based on your saved preferences, you're vegetarian and prefer reduced sugar.",
+        "According to my records, I don't have any saved memory regarding your pet.",
+        "As an AI assistant, I can help you manage your projects.",
+        "Here are three recommendations for your water monitor project: 1. ESP32, 2. Sensors.",
+        "<retrieved_context><memory id='1'>User note</memory></retrieved_context>",
+    ]
+    for text in assistant_texts:
+        res = client.post("/memories/extract", json={"message": text, "user_id": "test_user_asst"})
+        assert res.status_code == 200
+        assert len(res.json()["candidates"]) == 0, f"Assistant output '{text}' should produce zero candidates"

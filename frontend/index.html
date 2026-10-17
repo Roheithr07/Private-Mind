@@ -1897,7 +1897,7 @@ function setPage(next) {
   document.getElementById('subtitle').textContent = meta[page][1];
   if (page === 'memories' && memories.length === 0 && !isLoadingMemories) {
     loadMemories();
-  } else if (page === 'projects' && !projectsData && !isLoadingProjects) {
+  } else if (page === 'projects' && (!projectsData || projectsData.error) && !isLoadingProjects) {
     loadProjects();
   }
   render();
@@ -1909,14 +1909,23 @@ async function checkBackendHealth() {
     const res = await api.checkHealth();
     if (res.online) {
       isBackendOnline = true;
-      if (statusEl) statusEl.innerHTML = '● Backend Connected (127.0.0.1:8000)';
+      if (statusEl) {
+        statusEl.innerHTML = '● Backend Connected (127.0.0.1:8000)';
+        statusEl.style.color = '#059669';
+      }
     } else {
       isBackendOnline = false;
-      if (statusEl) statusEl.innerHTML = '○ Backend Offline (Check 8000)';
+      if (statusEl) {
+        statusEl.innerHTML = '○ Backend Offline (Check 8000)';
+        statusEl.style.color = '#dc2626';
+      }
     }
   } catch (err) {
     isBackendOnline = false;
-    if (statusEl) statusEl.innerHTML = '○ Backend Offline (Check 8000)';
+    if (statusEl) {
+      statusEl.innerHTML = '○ Backend Offline (Check 8000)';
+      statusEl.style.color = '#dc2626';
+    }
   }
 }
 
@@ -1948,10 +1957,10 @@ async function seedInitialMemories() {
   }
 }
 
-async function loadMemories() {
+async function loadMemories(reRender = (page === 'memories' || page === 'workspace')) {
   isLoadingMemories = true;
   memoriesError = null;
-  render();
+  if (reRender) render();
 
   try {
     const data = await api.getMemories({
@@ -1973,7 +1982,7 @@ async function loadMemories() {
     memoriesError = err.message || 'Failed to load memories from backend API.';
   } finally {
     isLoadingMemories = false;
-    render();
+    if (reRender) render();
   }
 }
 
@@ -2127,15 +2136,42 @@ function renderThreadMessages() {
 
     let candidatesHtml = '';
     if (msg.candidates && msg.candidates.length > 0) {
-      candidatesHtml = msg.candidates.map(cand => `
-        <div class="candidate-box" id="cand_${cand.candidate_id}">
-          <b>💡 Candidate fact extracted:</b> ${escapeHtml(cand.title)} — <em>"${escapeHtml(cand.content)}"</em> (${escapeHtml(cand.category || 'General')})
-          <div class="candidate-actions">
-            <button class="btn-sm btn-approve" data-approve="${cand.candidate_id}" data-msg-idx="${index}">Approve &amp; Save</button>
-            <button class="btn-sm btn-reject" data-reject="${cand.candidate_id}" data-msg-idx="${index}">Reject</button>
+      candidatesHtml = msg.candidates.map(cand => {
+        if (cand.status === 'rejected') {
+          return '';
+        }
+        if (cand.status === 'approved') {
+          return `
+            <div class="candidate-box saved" id="cand_${cand.candidate_id}" style="background:#ecfdf5;border:1px solid #10b981;border-radius:10px;padding:12px 16px;margin-top:12px">
+              <div style="color:#065f46;font-weight:600;display:flex;align-items:center;gap:6px">
+                <span>✓ Memory ${cand.savedMemoryId ? '#' + cand.savedMemoryId : ''} saved to SQLite Vault!</span>
+                <span class="badge-tag" style="background:#d1fae5;color:#065f46;border:0">${escapeHtml(cand.category || 'General')}</span>
+              </div>
+              <div style="font-size:13px;color:#047857;margin-top:4px">
+                <b>${escapeHtml(cand.title)}:</b> "${escapeHtml(cand.content)}"
+              </div>
+            </div>
+          `;
+        }
+        return `
+          <div class="candidate-box" id="cand_${cand.candidate_id}">
+            <div style="margin-bottom:6px">
+              <b>💡 Candidate fact extracted:</b> <strong>${escapeHtml(cand.title)}</strong> — <em>"${escapeHtml(cand.content)}"</em>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:6px;margin-bottom:6px">
+              <label for="cand_cat_${cand.candidate_id}" style="font-size:12px;font-weight:600;color:#475569">Category:</label>
+              <select id="cand_cat_${cand.candidate_id}" data-cand-cat="${cand.candidate_id}" style="font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid #cbd5e1;background:#fff">
+                ${['Preferences', 'Projects', 'Skills', 'Important', 'Personal', 'General'].map(cat => `<option value="${cat}" ${((cand.category || 'General').toLowerCase() === cat.toLowerCase()) ? 'selected' : ''}>${cat}</option>`).join('')}
+              </select>
+            </div>
+            <div class="candidate-error" id="cand_err_${cand.candidate_id}" style="display:none;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;padding:6px 10px;border-radius:6px;font-size:12px;margin:6px 0"></div>
+            <div class="candidate-actions">
+              <button class="btn-sm btn-approve" data-approve="${cand.candidate_id}" data-msg-idx="${index}">Approve &amp; Save</button>
+              <button class="btn-sm btn-reject" data-reject="${cand.candidate_id}" data-msg-idx="${index}">Reject</button>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     return `<div class="message">
@@ -2997,7 +3033,8 @@ function showNewProjectModal() {
     <div class="modal" id="newProjectModal">
       <form id="newProjectForm">
         <h2>Create New Project</h2>
-        <label>Project Title</label>
+        <div id="newProjError" style="display:none;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;padding:8px 12px;border-radius:6px;font-size:13px;margin-bottom:12px"></div>
+        <label>Project Title *</label>
         <input id="newProjTitle" placeholder="e.g. Smart Campus IoT Monitoring" required>
         <label>Description</label>
         <textarea id="newProjDesc" rows="3" placeholder="Overview of goals, scope, and technical context..."></textarea>
@@ -3041,7 +3078,7 @@ function showNewProjectModal() {
         <input id="newProjTags" placeholder="e.g. IoT, Hardware, Python">
         <div class="modal-actions">
           <button type="button" class="secondary" id="cancelNewProj">Cancel</button>
-          <button type="submit" class="primary">Create Project</button>
+          <button type="submit" class="primary" id="submitNewProjBtn">Create Project</button>
         </div>
       </form>
     </div>
@@ -3049,6 +3086,9 @@ function showNewProjectModal() {
   document.getElementById('cancelNewProj').onclick = () => { container.innerHTML = ''; };
   document.getElementById('newProjectForm').onsubmit = async (e) => {
     e.preventDefault();
+    const errBox = document.getElementById('newProjError');
+    if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
+
     const title = document.getElementById('newProjTitle').value.trim();
     const description = document.getElementById('newProjDesc').value.trim();
     const status = document.getElementById('newProjStatus').value;
@@ -3058,16 +3098,51 @@ function showNewProjectModal() {
     const rawTags = document.getElementById('newProjTags').value;
     const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
 
-    if (!title) return;
+    if (!title) {
+      if (errBox) {
+        errBox.textContent = 'Validation Error: Project title is required.';
+        errBox.style.display = 'block';
+      }
+      return;
+    }
+    if (title.length > 255) {
+      if (errBox) {
+        errBox.textContent = 'Validation Error: Project title cannot exceed 255 characters.';
+        errBox.style.display = 'block';
+      }
+      return;
+    }
+
+    const submitBtn = document.getElementById('submitNewProjBtn');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating Project...';
+    }
+
     try {
       const created = await api.createProject({ title, description, status, priority, deadline, tags, theme });
+      if (!created || !created.id) {
+        throw new Error('Server did not return a valid project ID.');
+      }
       container.innerHTML = '';
       await loadProjects();
-      if (created && created.id) {
-        await openProjectWorkspace(created.id);
-      }
+      await openProjectWorkspace(created.id);
     } catch (err) {
-      alert('Error creating project: ' + err.message);
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Project';
+      }
+      const errMsg = err.isNetworkError
+        ? `Connection Error: Cannot connect to PrivateMind backend at ${api.config.baseUrl}. Ensure FastAPI is running on port 8000.`
+        : err.status
+        ? `Server Error (${err.status}): ${err.message}`
+        : `Error creating project: ${err.message}`;
+      if (errBox) {
+        errBox.textContent = errMsg;
+        errBox.style.display = 'block';
+      } else {
+        alert(errMsg);
+      }
     }
   };
 }
@@ -3413,12 +3488,26 @@ async function showAttachMemoryModal(projectId) {
 
 // --- Render & Binding ---
 function render() {
-  document.getElementById('view').innerHTML =
-    page === 'workspace' ? workspace() :
-    page === 'memories' ? memoriesView() :
-    page === 'projects' ? projects() :
-    page === 'privacy' ? privacy() : settings();
-  bind();
+  const viewEl = document.getElementById('view');
+  if (!viewEl) return;
+  try {
+    viewEl.innerHTML =
+      page === 'workspace' ? workspace() :
+      page === 'memories' ? memoriesView() :
+      page === 'projects' ? projects() :
+      page === 'privacy' ? privacy() : settings();
+    bind();
+  } catch (err) {
+    console.error('Rendering error in page ' + page + ':', err);
+    viewEl.innerHTML = `
+      <div style="padding:48px 32px;max-width:600px;margin:40px auto;text-align:center;background:#fff;border:1px solid #fee2e2;border-radius:14px;box-shadow:var(--shadow-sm)">
+        <div style="width:48px;height:48px;border-radius:12px;background:#fee2e2;color:#dc2626;display:grid;place-items:center;margin:0 auto 16px;font-size:24px">⚠️</div>
+        <h2 style="font-size:20px;font-weight:700;color:#991b1b;margin:0 0 8px">Unable to display ${meta[page] ? meta[page][0] : 'workspace'}</h2>
+        <p style="color:#64748b;font-size:14px;margin:0 0 20px">${escapeHtml(err.message || 'An unexpected rendering error occurred.')}</p>
+        <button class="primary" style="margin:0 auto" onclick="render()">↻ Retry Loading</button>
+      </div>
+    `;
+  }
 }
 
 function bind() {
@@ -3929,19 +4018,104 @@ function bindChatEvents() {
       const candidate = msg.candidates.find(c => c.candidate_id === candId);
       if (!candidate) return;
 
+      // Duplicate submission guard
+      if (candidate._isSaving || candidate.status === 'approved') return;
+
+      const errEl = document.getElementById('cand_err_' + candId);
+      if (errEl) {
+        errEl.textContent = '';
+        errEl.style.display = 'none';
+      }
+
+      // Read candidate category from dropdown if present, otherwise candidate.category
+      const catSelect = document.getElementById('cand_cat_' + candId);
+      const category = (catSelect ? catSelect.value : candidate.category) || 'General';
+
+      // Validation
+      const title = (candidate.title || '').trim();
+      const content = (candidate.content || '').trim();
+      if (!title || !content) {
+        if (errEl) {
+          errEl.textContent = 'Validation Error: Title and content cannot be empty.';
+          errEl.style.display = 'block';
+        } else {
+          alert('Validation Error: Title and content cannot be empty.');
+        }
+        return;
+      }
+
+      candidate._isSaving = true;
+      btn.disabled = true;
+      btn.textContent = 'Saving to SQLite...';
+
       try {
-        btn.textContent = 'Saving...';
-        btn.disabled = true;
-        await api.approveMemories({ candidates: [candidate] });
+        const payloadCandidate = {
+          candidate_id: candidate.candidate_id || candId,
+          title: title,
+          content: content,
+          category: category,
+          action: candidate.action || 'create',
+          existing_memory_id: candidate.existing_memory_id || null,
+          user_id: api.config.userId || 'default_user',
+          source: candidate.source || 'conversation_extraction',
+        };
+
+        const res = await api.approveMemories({ candidates: [payloadCandidate] });
+
+        // Backend confirms success: find saved memory object with real database ID
+        const savedMem = (res.saved_memories && res.saved_memories[0]) ||
+                         (res.updated_memories && res.updated_memories[0]);
+        const savedId = savedMem ? savedMem.id : null;
+
+        candidate.status = 'approved';
+        candidate._isSaving = false;
+        candidate.savedMemoryId = savedId;
+        candidate.category = category;
+
+        // If returned real memory, immediately update local memories list so Vault is immediately updated
+        if (savedMem) {
+          const mapped = mapMemory(savedMem);
+          const existingIdx = memories.findIndex(m => m.id === savedMem.id);
+          if (existingIdx >= 0) {
+            memories[existingIdx] = mapped;
+          } else {
+            memories.unshift(mapped);
+          }
+        }
+
+        // Show visible success message in candidate box
         const box = document.getElementById('cand_' + candId);
         if (box) {
-          box.innerHTML = `<span style="color:#168064;font-weight:bold">✓ Memory saved to SQLite Vault!</span>`;
+          box.outerHTML = `
+            <div class="candidate-box saved" id="cand_${candId}" style="background:#ecfdf5;border:1px solid #10b981;border-radius:10px;padding:12px 16px;margin-top:12px">
+              <div style="color:#065f46;font-weight:600;display:flex;align-items:center;gap:6px">
+                <span>✓ Memory ${savedId ? '#' + savedId : ''} saved to SQLite Vault!</span>
+                <span class="badge-tag" style="background:#d1fae5;color:#065f46;border:0">${escapeHtml(category)}</span>
+              </div>
+              <div style="font-size:13px;color:#047857;margin-top:4px">
+                <b>${escapeHtml(title)}:</b> "${escapeHtml(content)}"
+              </div>
+            </div>
+          `;
         }
-        await loadMemories();
+
+        // Silently reload memories from backend without unmounting / wiping the chat thread
+        loadMemories(false);
       } catch (err) {
-        alert('Failed to approve memory: ' + err.message);
-        btn.textContent = 'Approve & Save';
+        candidate._isSaving = false;
         btn.disabled = false;
+        btn.textContent = 'Approve & Save';
+        const errorMsg = err.isNetworkError
+          ? `Connection Error: ${err.message}`
+          : err.status
+          ? `Server Error (${err.status}): ${err.message}`
+          : `Failed to approve memory: ${err.message}`;
+        if (errEl) {
+          errEl.textContent = errorMsg;
+          errEl.style.display = 'block';
+        } else {
+          alert(errorMsg);
+        }
       }
     };
   });
@@ -3949,13 +4123,20 @@ function bindChatEvents() {
   document.querySelectorAll('[data-reject]').forEach(btn => {
     btn.onclick = async () => {
       const candId = btn.dataset.reject;
+      const msgIdx = parseInt(btn.dataset.msgIdx, 10);
+      const msg = chatMessages[msgIdx];
+      if (msg && msg.candidates) {
+        const c = msg.candidates.find(cand => cand.candidate_id === candId);
+        if (c) c.status = 'rejected';
+        msg.candidates = msg.candidates.filter(cand => cand.candidate_id !== candId);
+      }
       try {
         await api.rejectMemories({ candidateIds: [candId] });
-        const box = document.getElementById('cand_' + candId);
-        if (box) box.remove();
       } catch (err) {
-        alert('Failed to reject candidate: ' + err.message);
+        console.warn('Reject notification failed:', err);
       }
+      const box = document.getElementById('cand_' + candId);
+      if (box) box.remove();
     };
   });
 }
@@ -3969,18 +4150,31 @@ function escapeHtml(s) {
 
 // Initial Boot
 async function init() {
+  // 1. Immediately render initial workspace so the UI displays without delay
+  render();
+
+  // 2. Perform initial backend health check
   await checkBackendHealth();
-  try {
-    const me = await api.getMe();
-    if (me) {
-      privacySettings.enableMemory = me.memory_enabled !== false;
-      privacySettings.autoCreation = me.auto_extraction !== false;
-      privacySettings.reviewBeforeSaving = me.review_before_save !== false;
+
+  // 3. If backend is reachable, load user settings
+  if (isBackendOnline) {
+    try {
+      const me = await api.getMe();
+      if (me) {
+        privacySettings.enableMemory = me.memory_enabled !== false;
+        privacySettings.autoCreation = me.auto_extraction !== false;
+        privacySettings.reviewBeforeSaving = me.review_before_save !== false;
+      }
+    } catch (e) {
+      console.debug('Using default user settings');
     }
-  } catch (e) {
-    console.debug('Using default user settings');
   }
-  await loadMemories();
+
+  // 4. Load memories and update workspace context
+  await loadMemories(true);
+
+  // 5. Periodic health heartbeat every 15s to maintain accurate connectivity indicator
+  setInterval(checkBackendHealth, 15000);
 }
 
 init();

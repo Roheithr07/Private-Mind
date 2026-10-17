@@ -55,3 +55,14 @@ def init_db():
     except ImportError:
         import models  # noqa: F401
     Base.metadata.create_all(bind=engine)
+
+    # Ensure schema migrations for existing SQLite databases
+    if DATABASE_URL.startswith("sqlite"):
+        try:
+            with engine.connect() as conn:
+                cols = [r[1] for r in conn.exec_driver_sql("PRAGMA table_info(project_notes)").fetchall()]
+                if cols and "is_memory" not in cols:
+                    conn.exec_driver_sql("ALTER TABLE project_notes ADD COLUMN is_memory BOOLEAN DEFAULT 0")
+                    conn.commit()
+        except Exception:
+            pass

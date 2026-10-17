@@ -52,6 +52,10 @@
       }
 
       if (!response.ok) {
+        if (response.status === 401 && typeof localStorage !== 'undefined') {
+          localStorage.removeItem('privatemind_token');
+          API_CONFIG.token = '';
+        }
         const errorDetail = (data && (data.detail || data.message)) || `Server returned status ${response.status}`;
         const err = new Error(typeof errorDetail === 'object' ? JSON.stringify(errorDetail) : errorDetail);
         err.status = response.status;
@@ -269,9 +273,9 @@
           description,
           status,
           priority,
-          deadline,
-          progress,
-          tags,
+          deadline: deadline || null,
+          progress: Number(progress) || 0,
+          tags: Array.isArray(tags) ? tags : [],
           theme,
           user_id: userId || API_CONFIG.userId,
         }),

@@ -94,8 +94,8 @@ def test_missing_credentials_configuration_error(client, monkeypatch):
     """
     # Test Nebius without API key
     monkeypatch.setenv("LLM_PROVIDER", "nebius")
-    monkeypatch.delenv("NEBIUS_API_KEY", raising=False)
-    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.setenv("NEBIUS_API_KEY", "")
+    monkeypatch.setenv("LLM_API_KEY", "")
 
     res_nebius = client.post("/chat", json={"message": "Hello!"})
     assert res_nebius.status_code == 500
@@ -103,8 +103,8 @@ def test_missing_credentials_configuration_error(client, monkeypatch):
 
     # Test NVIDIA without API key
     monkeypatch.setenv("LLM_PROVIDER", "nvidia")
-    monkeypatch.delenv("NVIDIA_API_KEY", raising=False)
-    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.setenv("NVIDIA_API_KEY", "")
+    monkeypatch.setenv("LLM_API_KEY", "")
 
     res_nvidia = client.post("/chat", json={"message": "Hello!"})
     assert res_nvidia.status_code == 500

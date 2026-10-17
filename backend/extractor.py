@@ -41,10 +41,60 @@ TEMPORARY_FEELING_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+QUESTION_STARTERS = (
+    "what", "what's", "whats", "where", "when", "why", "which", "who", "whom", "whose",
+    "how", "can you", "could you", "would you", "will you", "do you", "did you",
+    "is there", "are there", "am i", "do i", "did i", "have i", "can i", "could i",
+    "should i", "may i", "tell me", "explain", "help me", "show me", "give me", "list",
+    "summarize", "describe", "write a", "create a", "generate a", "recommend", "suggest",
+    "remind me",
+)
+
+ASSISTANT_PATTERNS = [
+    re.compile(
+        r"\b(?:based on your|according to (?:your|my)|as an ai|as a language model|i don't have any saved|"
+        r"i do not have any saved|here (?:is|are)|let me know if you|feel free to|i'm happy to help|sure,|certainly,|of course,)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(r"<(?:retrieved_context|memory|context)>", re.IGNORECASE),
+    re.compile(
+        r"\b(?:saved memories?|saved preferences?|historical memory notes?|personal knowledge assistant)\b",
+        re.IGNORECASE,
+    ),
+]
+
 
 def contains_secrets(text: str) -> bool:
     """Detect passwords, tokens, or API keys in text."""
     return any(pattern.search(text) for pattern in SENSITIVE_PATTERNS)
+
+
+def is_assistant_message(text: str) -> bool:
+    """Detect assistant-generated outputs, system prompt markers, and AI boilerplate."""
+    if not text:
+        return False
+    return any(p.search(text) for p in ASSISTANT_PATTERNS)
+
+
+def is_question_or_request(text: str) -> bool:
+    """Detect questions, inquiries, imperatives, and assistant prompts."""
+    clean = text.strip().lower()
+    if not clean:
+        return False
+    if clean.endswith("?") or "?" in clean:
+        return True
+    words = clean.split()
+    for starter in QUESTION_STARTERS:
+        if clean.startswith(starter + " ") or clean == starter:
+            return True
+    if clean.startswith("please ") and len(words) > 1:
+        second_word = words[1]
+        if second_word in [
+            "write", "help", "show", "tell", "explain", "summarize", "give", "list",
+            "generate", "create", "find", "check", "recommend", "suggest"
+        ]:
+            return True
+    return False
 
 
 def is_greeting_or_filler(text: str) -> bool:
@@ -132,10 +182,10 @@ class DeterministicExtractorProvider(BaseExtractionProvider):
         Classifies clause into (title, content, category, confidence, is_durable).
         Returns None for category if no durable fact is identified.
         """
-        lower = clause.lower()
+        lower = clause.lower().strip()
 
-        # 1. Filter out greetings, filler, transient feelings
-        if is_greeting_or_filler(clause):
+        # 1. Filter out greetings, filler, transient feelings, questions, and assistant-generated content
+        if is_greeting_or_filler(clause) or is_question_or_request(clause) or is_assistant_message(clause):
             return None, None, None, 0.0, False
 
         if UNCERTAINTY_PATTERN.search(clause) or TEMPORARY_FEELING_PATTERN.search(clause):
@@ -143,7 +193,7 @@ class DeterministicExtractorProvider(BaseExtractionProvider):
 
         # 2. Skills and Learning Goals
         skill_match = re.search(
-            r"(?:i'm\s+learning|i\s+am\s+learning|learning|studying|mastering|practicing|skilled\s+in|proficient\s+in)\s+([^,.!?]+)",
+            r"(?:i'm\s+learning|i\s+am\s+learning|learning|studying|mastering|practicing|skilled\s+in|proficient\s+in|familiar\s+with)\s+([^,.!?]+)",
             lower,
         )
         if skill_match:
@@ -164,7 +214,18 @@ class DeterministicExtractorProvider(BaseExtractionProvider):
             content = f"Working on {proj}."
             return title, content, "Projects", 0.92, True
 
-        # 4. Personal Preferences (Dietary, Workflows, Habits)
+        # 4. Testing, Telemetry & Protocols
+        testing_match = re.search(
+            r"(?:i'm\s+testing|i\s+am\s+testing|testing|evaluating|benchmarking)\s+(?:a\s+|an\s+|the\s+)?([^,.!?]+)",
+            lower,
+        )
+        if testing_match:
+            test_sub = testing_match.group(1).strip()
+            title = f"Testing {test_sub[:30].title()}"
+            content = f"Testing {test_sub}."
+            return title, content, "Projects", 0.88, True
+
+        # 5. Personal Preferences (Dietary, Workflows, Habits)
         if re.search(r"\b(?:vegetarian|vegan|pescatarian|gluten[ -]free|reduced sugar|low sugar)\b", lower):
             diet = "Vegetarian" if "vegetarian" in lower else "Vegan" if "vegan" in lower else "Dietary Preference"
             title = f"{diet} Diet"
@@ -181,7 +242,7 @@ class DeterministicExtractorProvider(BaseExtractionProvider):
             content = f"Prefers {pref}."
             return title, content, "Preferences", 0.88, True
 
-        # 5. Important Decisions
+        # 6. Important Decisions
         decision_match = re.search(
             r"(?:decided\s+to|chose\s+to|agreed\s+to|committed\s+to|concluded\s+that)\s+([^,.!?]+)",
             lower,
@@ -192,7 +253,7 @@ class DeterministicExtractorProvider(BaseExtractionProvider):
             content = f"Decided to {decision}."
             return title, content, "Decisions", 0.87, True
 
-        # 6. Context & Background (location, education, identity)
+        # 7. Context & Background (location, education, identity)
         context_match = re.search(
             r"(?:studying\s+at|based\s+in|living\s+in|student\s+at|role\s+is|working\s+at)\s+([^,.!?]+)",
             lower,
@@ -203,9 +264,9 @@ class DeterministicExtractorProvider(BaseExtractionProvider):
             content = f"Associated with {ctx}."
             return title, content, "Context", 0.85, True
 
-        # Fallback for concise declarative facts
-        if len(clause.split()) >= 3 and not lower.endswith("?") and not is_greeting_or_filler(clause):
-            return clause[:40].title(), clause, "General", 0.65, True
+        # 8. Strict Declarative Fallback (User-provided facts with sufficient evidence only)
+        if re.search(r"^(?:i\s+am|i'm|my|we\s+are|we're)\s+", lower) and len(clause.split()) >= 4:
+            return clause[:40].title(), clause, "General", 0.70, True
 
         return None, None, None, 0.0, False
 
@@ -264,6 +325,9 @@ class DeterministicExtractorProvider(BaseExtractionProvider):
         Extracts candidate memories from message.
         """
         if contains_secrets(message):
+            return []
+
+        if is_assistant_message(message):
             return []
 
         clauses = self.split_clauses(message)

@@ -45,7 +45,7 @@ class LLMResponse(BaseModel):
     model: str
     provider: str
     is_mock: bool = False
-    usage: Optional[Dict[str, int]] = None
+    usage: Optional[Dict[str, Any]] = None
     latency_ms: Optional[float] = None
 
 

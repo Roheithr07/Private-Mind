@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -201,7 +201,7 @@ class ChatMessageResponse(BaseModel):
     extracted_candidates: List[CandidateMemory] = []
     created_at: datetime
     latency_ms: Optional[float] = None
-    usage: Optional[Dict[str, int]] = None
+    usage: Optional[Dict[str, Any]] = None
 
 
 class ConversationHistoryResponse(BaseModel):

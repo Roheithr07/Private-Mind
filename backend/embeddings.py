@@ -49,7 +49,7 @@ class LocalSemanticEmbeddingProvider(BaseEmbeddingProvider):
             "learning": {"learn", "learning", "study", "studying", "skill", "skills", "master", "mastering", "practice", "practicing"},
             "projects": {"project", "projects", "build", "building", "develop", "developing", "work", "working", "create", "initiative", "monitor", "monitoring"},
             "water_monitoring": {"water", "quality", "monitoring", "monitor", "turbidity", "sensors", "temperature", "oxygen", "clean"},
-            "diet_health": {"diet", "food", "meal", "eating", "vegetarian", "vegan", "sugar", "calories", "nutrition", "workout", "fitness"},
+            "diet_health": {"diet", "dietary", "food", "meal", "eating", "vegetarian", "vegan", "sugar", "calories", "nutrition", "workout", "fitness"},
             "location": {"location", "live", "living", "based", "chennai", "campus", "university", "college", "residence"},
         }
 
